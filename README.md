@@ -2,28 +2,93 @@
 ## GIỚI THIỆU
 
  - Xây dựng website với tính năng đăng nhập đa nền tảng bằng tài khoản nội bộ, gmail, facebook, mail hust
- - Ảnh chụp minh họa:\
+ - Ảnh chụp minh họa:
+
+Trang login:
+ <img width="1917" height="875" alt="image" src="https://github.com/user-attachments/assets/59f9e663-ef75-4707-beef-c41b4968d4ae" />
+Trang register:
+<img width="1891" height="876" alt="image" src="https://github.com/user-attachments/assets/41573527-13a5-4fc6-8a74-e92b945585a6" />
+Sau khi đăng nhập:
+<img width="1900" height="872" alt="image" src="https://github.com/user-attachments/assets/099abaf0-d1e6-4da3-86e3-07ef28f2ee44" />
+
+
    
 
 ## TÁC GIẢ
 
-- Tên nhóm:......
-- Thành viên trong nhóm
-  |STT|Họ tên|MSSV|
-  |--:|--|--|
-  |1|Nguyễn Hoàng Hải|20002987|
+- Họ và tên: Nguyễn Thị Khánh Vân
+- MSSV: 20235869
 
 ## MÔI TRƯỜNG HOẠT ĐỘNG
 
-- Mô tả sơ lược về các thành phần như máy tính, mobile, thiết bị IoT... các máy chủ back-end, front-end, mqtt, database
-- Thông tin về nền tảng OS mà hệ thống vận hành
-- Nên có sơ đồ tích hợp hệ thống để người xem thấy được mối liên quan giữa các thành phần.
+- Client: Trình duyệt web. Người dùng tương tác với giao diện UI
+- Frontend: React+Vite ( mặc định http://localhost:5173)
+- Backend: Express (Nodejs) dùng TypeScript
+- Database: PostgreSQL + thư viện Prisma
+- Auth & Docs: xác thực JWT, tài liệu API bằng Swagger
+- Hệ điều hành: Windows
+- Sơ đồ tích hợp hệ thống:
+<img width="1717" height="432" alt="image" src="https://github.com/user-attachments/assets/da064c43-b5dd-49e4-adff-e70c8cac7285" />
+
   
 ## HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY THỬ
 
-  Các bước đề cài đặt hệ thống. Trường hợp với IoT, có thể hướng dẫn ngắn gọn là: cắm điện, gạt công tắc ....
-  Nêu ra một tình huống sử dụng đơn giản để chứng tỏ sản phẩm có vận hành đúng (Self Test)
+### Yêu cầu hệ thống
+- Nodejs (v18 hoặc v20)
+- PostgreSQL
+- Git
+### Các bước cài đặt
+#### Backend
+- Bước 1: Fork và Clone mã nguồn về máy
+- Bước 2: Di chuyển vào backend và cài đặt các thư viện cần thiết
+```bash
+cd backend
+npm install
+```
+- Bước 3: tạo .env trong thư mục backend và cấu hình các biến môi trường
+```bash
+# Kết nối Database PostgreSQL
+DATABASE_URL="postgresql://postgres:mat_khau_db@localhost:5432/ten_db_cua_ban?schema=public"
 
+# Cấu hình JWT và OAuth2
+JWT_SECRET="bi_mat_quan_trong_khong_tiet_lo"
+VITE_GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
+
+# Cổng API xác thực HUST (ToolHub)
+HUST_AUTH_API_URL="https://api.example.com/hust-auth"
+```
+- Bước 4: Đồng bộ Databse với Prisma
+```bash
+# tạo/migrate schema (nếu muốn tạo migration)
+npx prisma migrate dev --name init
+# sinh prisma client
+npx prisma generate
+```
+- Bước 5: Khởi chạy Backend
+```bash
+npm run dev
+```
+Sau khi backend chạy tại http://localhost:3000
+tài liệu API có thể truy cập tại http://localhost:3000/api-docs
+#### Frontend
+Bước 1: Di chuyển sang thư mục frontend và cài đặt:
+```bash
+cd ../frontend
+npm install
+```
+- Bước 2: Tạo .env nằm trong thư mục frontend
+```bash
+VITE_API_BASE_URL="http://localhost:3000/api"
+VITE_GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
+```
+- Bước 3: chạy
+```bash
+npm run dev
+```
+Frontend của sẽ chạy mặc định tại địa chỉ: http://localhost:5173
+### Kiểm tra
+- Mở http://localhost:5173 trong trình duyệt và thử đăng ký/đăng nhập
+- Hoặc mở Swagger: http://localhost:3000/api-docs để thử API
 ## NGUYÊN LÝ CƠ BẢN
 
 > Tham khảo cách trình bày như ở đây [Code Project](https://www.codeproject.com/Articles/5385907/Managing-Cplusplus-Projects-with-Conan-and-CMake)

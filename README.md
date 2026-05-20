@@ -28,7 +28,33 @@ Sau khi đăng nhập:
 - Auth & Docs: xác thực JWT, tài liệu API bằng Swagger
 - Hệ điều hành: Windows
 - Sơ đồ tích hợp hệ thống:
-<img width="1717" height="432" alt="image" src="https://github.com/user-attachments/assets/da064c43-b5dd-49e4-adff-e70c8cac7285" />
+```mermaid
+flowchart LR
+    %% Client & Frontend
+    Browser["Client (Trình duyệt Web)"] -->|1. Tương tác UI| ViteDev["Frontend: React + Vite\n(Port 5173)"]
+    
+    %% Frontend to Backend via Proxy
+    ViteDev -->|2. Gọi API qua Axios Proxy /api| Express["Backend: Express\n(Node.js + TypeScript)"]
+    
+    %% Backend Integrations
+    subgraph ThirdParty ["Hệ thống Xác thực bên thứ 3 (OAuth2 & API)"]
+        Google["Google Auth\n(OAuth2 Client)"]
+        Facebook["Facebook Graph API"]
+        ToolHub["API ToolHub\n(Cổng xác thực HUST)"]
+    end
+
+    Express <-->|3a. Xác thực Token / Kiểm tra mật khẩu| ThirdParty
+    
+    %% Backend to Database & Docs
+    subgraph DataAndDocs ["Dữ liệu & Tài liệu"]
+        Postgres[(Database:\nPostgreSQL)]
+        Swagger["Auth & Docs:\nJWT + Swagger UI"]
+    end
+
+    Express -->|3b. Ánh xạ 1-1 & Lưu trữ| Postgres
+    Express -->|4. Sinh tài liệu API| Swagger
+
+```
 
   
 ## HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY THỬ
@@ -116,11 +142,137 @@ sequenceDiagram
 ```
 
 ### CÁC THUẬT TOÁN CƠ BẢN
-
-- Ví dụ: tạo token bằng JWT.
-- Ví dụ: băm mật khẩu bằng MD5 theo công thức: MD5(key+"myapp"+key).
-- Ví dụ: tạo id cho đối tượng bằng GUID, hoặc bằng hàm random.
-
+- Băm mật khẩu bằng bcryptjs
+```mermaid
+flowchart TD
+    A["User nhập mật khẩu thô\n(plain_password)"] --> B{"Kiểm tra dữ liệu đầu vào\n(password không rỗng?)"}
+    
+    B -->|Không hợp lệ| C["Trả lỗi 400:\nThiếu mật khẩu"]
+    B -->|Hợp lệ| D["Tạo hash bằng bcryptjs\nbcrypt.hash(password, 10)"]
+    
+    D --> E["Lưu hashed password vào DB\n(Tuyệt đối không lưu mật khẩu thô)"]
+    E --> F["Hoàn tất đăng ký"]
+    
+    C --> Z([End])
+    F --> Z
+```
+- Tạo JWT token
+```mermaid
+flowchart TD
+    A["Người dùng đã xác thực thành công"] --> B["Lấy thông tin user từ DB"]
+    B --> C["Trích xuất permissions từ role\nuser.role.permissions"]
+    C --> D["Tạo payload JWT\n{ userId, role, permissions }"]
+    D --> E["Ký token bằng JWT_SECRET\njwt.sign(payload, JWT_SECRET, { expiresIn: '1h' })"]
+    E --> F["Trả về access token cho client"]
+    F --> G["Client lưu token và dùng cho các request sau"]
+```
+- Đăng ký:
+```mermaid
+flowchart TD
+    A["User nhập:\nemail, username, password"] --> B{"Kiểm tra email\nđã tồn tại trong DB?"}
+    
+    B -->|Đã tồn tại| C["Throw Error:\n'Email đã được sử dụng'"]
+    B -->|Chưa tồn tại| D["Băm mật khẩu\n(bcryptjs hash 10)"]
+    
+    D --> E["Tạo User mới (Prisma)\nrole_id = 2"]
+    
+    E --> F["Trả về thông tin User\n{ id, email, username, role_id }"]
+    
+    C --> G([End])
+    F --> G
+```
+- Đăng nhập
+```mermaid
+flowchart TD
+    A["User nhập:\nemail, password"] --> B["Tìm user theo email"]
+    B -->|Không tìm thấy| C["HTTP 401:\nEmail không tồn tại"]
+    B -->|Tìm thấy| D["So sánh password\nbcryptjs.compare\ninput_password với hashed_password"]
+    D -->|Không khớp| E["HTTP 401:\nMật khẩu sai"]
+    D -->|Khớp| F["Lấy role & permissions\nSELECT role, permissions FROM user"]
+    F --> G["Tạo JWT Token\npayload: userId, role, permissions\nexpiresIn: 1h\nsigned with JWT_SECRET"]
+    G --> H["HTTP 200\n{ token, user { id, email, username, role, permissions } }"]
+    C --> Z([End])
+    E --> Z
+    H --> Z
+```
+- Đăng nhập bằng Google
+```mermaid
+flowchart TD
+    A["User click 'Login with Google'\nFrontend nhận Google ID token"] --> B["POST /api/auth/google\n{ token }"]
+    B --> C["Verify ID token\nGoogleAuthClient.verifyIdToken"]
+    C -->|Invalid| D["HTTP 401:\nInvalid Google token"]
+    C -->|Valid| E["Trích xuất\ngoogle_id = payload.sub\nemail = payload.email"]
+    E --> F["Tìm theo google_id"]
+    F -->|Tìm thấy| G["User tồn tại\nDùng user này"]
+    F -->|Không tìm thấy| H["Tìm theo email"]
+    H -->|Tìm thấy| I["Account Linking\nUPDATE user\nSET google_id = provider_id"]
+    H -->|Không tìm thấy| J["Tạo User mới\nINSERT user\nemail, google_id, username"]
+    I --> K["Tạo JWT"]
+    J --> K
+    G --> K
+    K --> L["HTTP 200\n{ token, user }"]
+    D --> Z([End])
+    L --> Z
+```
+- Đăng nhập bằng Facebook
+```mermaid
+flowchart TD
+    A["User click 'Login with Facebook'\nFrontend nhận access token"] --> B["POST /api/auth/facebook\n{ token }"]
+    B --> C["Verify Access Token\nGọi Facebook Graph API\nGET /me?fields=id,name,email"]
+    C -->|Lỗi/Không email| D["HTTP 401:\nInvalid Facebook token\nhoặc thiếu email"]
+    C -->|Valid| E["Trích xuất\nfacebook_id = fbData.id\nemail = fbData.email\nname = fbData.name"]
+    E --> F["Tìm theo facebook_id"]
+    F -->|Tìm thấy| G["User tồn tại"]
+    F -->|Không tìm thấy| H["Tìm theo email"]
+    H -->|Tìm thấy| I["Account Linking\nUPDATE user\nSET facebook_id = provider_id"]
+    H -->|Không tìm thấy| J["Tạo User mới\nINSERT user"]
+    I --> K["Tạo JWT"]
+    J --> K
+    G --> K
+    K --> L["HTTP 200\n{ token, user }"]
+    D --> Z([End])
+    L --> Z
+```
+- Đăng nhập bằng tài khoản Hust
+```mermaid
+flowchart TD
+    A["User nhập\ntaikhoan (HUST ID), matkhau"] --> B["POST /api/auth/hust\n{ taikhoan, matkhau }"]
+    B --> C["Verify HUST Account\nGọi HUST Auth API\nGET ?taikhoan=...&matkhau=..."]
+    C -->|Kết quả != 1| D["HTTP 401:\nTài khoản/mật khẩu HUST sai"]
+    C -->|Kết quả = 1| E["Trích xuất\nhust_id = taikhoan\nemail = taikhoan (nếu email)"]
+    E --> F["Tìm theo hust_id"]
+    F -->|Tìm thấy| G["User tồn tại"]
+    F -->|Không tìm thấy| H["Tìm theo email"]
+    H -->|Tìm thấy| I["Account Linking\nUPDATE user\nSET hust_id = provider_id"]
+    H -->|Không tìm thấy| J["Tạo User mới\nINSERT user\nhust_id, email"]
+    I --> K["Tạo JWT"]
+    J --> K
+    G --> K
+    K --> L["HTTP 200\n{ token, user }"]
+    D --> Z([End])
+    L --> Z
+```
+- Xác thực token và phân quyền
+```mermaid
+flowchart TD
+    A["Request tới endpoint bảo vệ\nHeader: Authorization: Bearer <token>"] --> B{"Trích xuất token\n(split 'Bearer ')"}
+    
+    B -->|Không có token| C["HTTP 401:\nBạn chưa đăng nhập (Thiếu Token)"]
+    B -->|Có token| D{"Verify JWT\njwt.verify(token, JWT_SECRET)"}
+    
+    D -->|Lỗi / Hết hạn| E["HTTP 403:\nToken không hợp lệ hoặc đã hết hạn"]
+    D -->|Hợp lệ| F["Giải mã Token\nGắn payload vào req.user\n{ userId, role, permissions }"]
+    
+    F --> G{"Kiểm tra Permission\nuserPermissions.includes(permission)?"}
+    
+    G -->|Không có quyền| H["HTTP 403:\nBạn không có quyền truy cập"]
+    G -->|Có quyền| I["Cho phép (next)\nĐi tiếp vào Controller"]
+    
+    C --> Z([End])
+    E --> Z
+    H --> Z
+    I --> Z
+```
 > Nên sử dụng cú pháp mermaid trong markdown, cho phép từ text sinh ra đồ thị. Như vậy dễ hiệu chỉnh. Ví dụ, hoặc [có thể sửa online rồi copy vào tài liệu](https://www.mermaidchart.com/play?utm_source=mermaid_live_editor&utm_medium=share#pako:eNqrVkrOT0lVslJKy8kvT85ILCpRCHGJyVMAAsfokMOr8hRyMx_ubsyLVdDVtaspyXy4a39BjYKThu_hhZUKyRkPdy_XhKh2AilQcK4OT00qzixJrYWIOoO1-eel1ii4RLsV5eeV6KbmpSikJVqlJeqmVqbGIisLKc-vUXCNdkpMzkZSVZxaVJZaBFSoVAsA0_I7vg)
 
 ```mermaid
@@ -135,38 +287,155 @@ flowchart TD
 
 ### THIẾT KẾ CƠ SỞ DỮ LIỆU
 
-- Sơ đồ quan hệ thực thể để thể hiện mối quan hệ giữa các trường thông tin.
-- Giải thích các table, và một vài table.field quan trọng
-- Cấu trúc các file cấu hình như .env, .conf, .xml
+- Sơ đồ quan hệ thực thể thể hiện mối quan hệ giữa các trường thông tin.
 
 > Nên sử dụng cú pháp mermaid trong markdown, cho phép từ text sinh ra đồ thị. Như vậy dễ hiệu chỉnh. Ví dụ, hoặc [có thể sửa online rồi copy vào tài liệu](https://mermaidchart.com/play?utm_source=mermaid_live_editor&utm_medium=share#pako:eNqdUsGKwjAQ_ZUw5yra1qq5qoc9iIurl6WwhCatgTbpphNYt_rvm7ZWlIKHndPM4-XNy2NqSDQXQEGYtWSZYUWsiKvV8eOw22725HIZjXRNdvu1Gygpc5aIquN0WEO43Ahfb4fN1rESrZBJdeO973fr4-rwJNUzpUpyy3vF-9a6m5uq0EiVEckHkGKFGICiYDLv0OujzdeKnKEg2nCXgusG1AoZ2upJtf_UP5ymuWZISiMTMTTaBfOgKhWSb8sUSjy_0gAPMiM50JTllfCgEMZF4WZoxWLAk3AugLqWi5TZHGOIVfOuZOpT6wIoGuteGm2zUz_Yssnmdht3hlAuqpW2CoEuWwGgNfwADSbT8TRyFUSTwI_C0IOzQ6Nx5IfLRTjzF_No7gdXD37bjZPxYj7zQHCJ2my7U2wv8voHm3HFLQ) 
 
 ```mermaid
 erDiagram
-    CUSTOMER ||--o{ ORDER : places
-    ORDER ||--|{ ORDER_ITEM : contains
-    PRODUCT ||--o{ ORDER_ITEM : includes
-    CUSTOMER {
-        string id
-        string name
-        string email
-    }
-    ORDER {
-        string id
-        date orderDate
-        string status
-    }
-    PRODUCT {
-        string id
-        string name
-        float price
-    }
-    ORDER_ITEM {
-        int quantity
-        float price
-    }
-```
 
+    User {
+        Int id PK
+        String username
+        String password
+        String email UK
+        String google_id UK
+        String facebook_id UK
+        String hust_id UK
+        DateTime created_date
+        DateTime updated_date
+        Int role_id FK
+    }
+
+    Role {
+        Int id PK
+        String role_name
+    }
+
+    Permission {
+        Int id PK
+        Int role_id FK
+        String permission_name
+    }
+
+    Post {
+        Int id PK
+        Int user_id FK
+        DateTime created_date
+        DateTime updated_date
+        Int total_point
+        String content
+        String image
+        DateTime expired_time
+        String tag_list
+    }
+
+    Category {
+        Int id PK
+        String category_name UK
+    }
+
+    CatePost {
+        Int post_id PK, FK
+        Int category_id PK, FK
+    }
+
+    Vote {
+        Int id PK
+        Int post_id FK
+        String tag_name
+        Int point
+        Int user_id FK
+    }
+
+    Role ||--o{ User : has
+    Role ||--o{ Permission : grants
+
+    User ||--o{ Post : creates
+    User ||--o{ Vote : gives
+
+    Post ||--o{ Vote : receives
+
+    Post ||--o{ CatePost : categorized
+    Category ||--o{ CatePost : contains
+```
+- Giải thích các table, và một vài table.field quan trọng
+```prisma
+// File: backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String
+  password     String
+  email        String   @unique
+  google_id    String?  @unique
+  facebook_id  String?  @unique
+  hust_id      String?  @unique
+  created_date DateTime @default(now())
+  updated_date DateTime @updatedAt
+  role_id      Int
+  posts        Post[]
+  role         Role     @relation(fields: [role_id], references: [id])
+  vote         Vote[]
+}
+
+model Role {
+  id          Int          @id @default(autoincrement())
+  role_name   String
+  permissions Permission[]
+  users       User[]
+}
+
+model Permission {
+  id              Int    @id @default(autoincrement())
+  role_id         Int
+  permission_name String
+  role            Role   @relation(fields: [role_id], references: [id])
+}
+```
+ #### Bảng **USER**
+| Cột | Kiểu | Ràng buộc | Mô tả |
+|-----|------|----------|--------|
+| `id` | INT | PK, AUTO_INCREMENT | ID nội bộ duy nhất |
+| `username` | VARCHAR | NOT NULL | Tên hiển thị |
+| `password` | VARCHAR | NOT NULL | Mật khẩu đã băm bằng bcrypt |
+| `email` | VARCHAR | UNIQUE, NOT NULL | Email để đăng ký & đăng nhập form |
+| `google_id` | VARCHAR | UNIQUE, NULLABLE | Google subject ID |
+| `facebook_id` | VARCHAR | UNIQUE, NULLABLE | Facebook user ID |
+| `hust_id` | VARCHAR | UNIQUE, NULLABLE | Mã đăng nhập HUST |
+| `created_date` | TIMESTAMP | DEFAULT NOW() | Thời gian tạo account |
+| `updated_date` | TIMESTAMP | DEFAULT NOW() | Thời gian cập nhật cuối |
+| `role_id` | INT | FK (ROLE.id) | Tham chiếu vai trò |
+
+#### Bảng **ROLE**
+| Cột | Kiểu | Ràng buộc | Mô tả |
+|-----|------|----------|--------|
+| `id` | INT | PK, AUTO_INCREMENT | ID vai trò |
+| `role_name` | VARCHAR | NOT NULL | Tên vai trò (USER, ADMIN, GUEST) |
+
+#### Bảng **PERMISSION**
+| Cột | Kiểu | Ràng buộc | Mô tả |
+|-----|------|----------|--------|
+| `id` | INT | PK, AUTO_INCREMENT | ID quyền |
+| `role_id` | INT | FK (ROLE.id), NOT NULL | Tham chiếu vai trò |
+| `permission_name` | VARCHAR | NOT NULL | Tên quyền (POST_CREATE, USER_VIEW, ...) |
+- Cấu trúc **File:** `backend/.env`
+   - DATABASE_URL
+   - JWT_SECRET
+   - VITE_GOOGLE_CLIENT_ID
+   - HUST_AUTH_API_URL
+- Cấu trúc **File:** `frontend/.env`
+   - VITE_GOOGLE_CLIENT_ID
+   - VITE_FB_APP_ID
 ### CÁC PAYLOAD
 
 - Cấu trúc các gói json

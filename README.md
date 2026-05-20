@@ -78,16 +78,16 @@ DATABASE_URL="postgresql://postgres:mat_khau_db@localhost:5432/ten_db_cua_ban?sc
 
 # Cấu hình JWT và OAuth2
 JWT_SECRET="bi_mat_quan_trong_khong_tiet_lo"
-VITE_GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
 
 # Cổng API xác thực HUST (ToolHub)
 HUST_AUTH_API_URL="https://api.example.com/hust-auth"
 ```
 - Bước 4: Đồng bộ Databse với Prisma
 ```bash
-# tạo/migrate schema (nếu muốn tạo migration)
-npx prisma migrate dev --name init
-# sinh prisma client
+# Đồng bộ trực tiếp cấu trúc Schema hiện tại xuống Database
+npx prisma db push
+# Khởi tạo/Cập nhật Prisma Client để mã nguồn có thể tương tác được với Database
 npx prisma generate
 ```
 - Bước 5: Khởi chạy Backend
@@ -104,8 +104,8 @@ npm install
 ```
 - Bước 2: Tạo .env nằm trong thư mục frontend
 ```bash
-VITE_API_BASE_URL="http://localhost:3000/api"
 VITE_GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
+VITE_FB_APP_ID=
 ```
 - Bước 3: chạy
 ```bash
@@ -431,7 +431,7 @@ model Permission {
 - Cấu trúc **File:** `backend/.env`
    - DATABASE_URL
    - JWT_SECRET
-   - VITE_GOOGLE_CLIENT_ID
+   - GOOGLE_CLIENT_ID
    - HUST_AUTH_API_URL
 - Cấu trúc **File:** `frontend/.env`
    - VITE_GOOGLE_CLIENT_ID

@@ -207,8 +207,8 @@ sequenceDiagram
 	API-->>Client: HTTP 200/401/403
 	Client-->>UI: Trả kết quả
  ```
-| Thành phần | Vai trò | Nằm trên đâu trong project |
-|---|---|---|
+| Thành phần | Vai trò |
+|---|---|
 | Front-end | Hiển thị giao diện cho người dùng, nhận dữ liệu nhập vào, gọi API đăng nhập hoặc đăng ký, lưu token sau khi login thành công |
 | Back-end | Nhận request từ frontend, xử lý đăng nhập, đăng ký, xác thực token, kiểm tra quyền và trả dữ liệu về |
 | Middleware | Đứng giữa request và controller để kiểm tra trước khi xử lý, ví dụ `verifyToken` và `checkPermission` |
@@ -1053,16 +1053,6 @@ export const checkPermission = (permission: string) => {
 **Xử lý nghiệp vụ:**
 - Nếu user có quyền: gọi `next()` để tiếp tục
 - Nếu user không có quyền: trả HTTP 403 với error message
-
-
-### PHÁT SINH
-
-_Các sự cố, vẫn đề, lỗi mà không xử lý được, hoặc xử lý mất quá 4h thì nên ghi vào đây, hoặc ghi vào [issue của GitHub](https://github.com/neittien0110/ProjectSample/issues). Sẽ được tính điểm. Ví dụ__
-
-- __Lỗi: blablablabla__
-  - Chi tiêt: .....
-  - Nguyên nhân: ...
-  - Giải pháp: chưa có
 
   
 ## KẾT QUẢ

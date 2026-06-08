@@ -86,14 +86,15 @@ HUST_AUTH_API_URL="https://api.example.com/hust-auth"
 ```
 - Bước 4: Đồng bộ Databse với Prisma
 ```bash
-# Đồng bộ trực tiếp cấu trúc Schema hiện tại xuống Database
+# Đồng bộ trực tiếp cấu trúc Schema hiện tại lên Database
 npx prisma db push
 # Khởi tạo/Cập nhật Prisma Client để mã nguồn có thể tương tác được với Database
 npx prisma generate
 ```
 - Bước 5: Khởi chạy Backend
 ```bash
-npm run dev
+npm run build
+npm run start
 ```
 Sau khi backend chạy tại http://localhost:3000
 tài liệu API có thể truy cập tại http://localhost:3000/api-docs
@@ -110,7 +111,8 @@ VITE_FB_APP_ID=
 ```
 - Bước 3: chạy
 ```bash
-npm run dev
+npm run build
+npm run start
 ```
 Frontend của sẽ chạy mặc định tại địa chỉ: http://localhost:5173
 ### Kiểm tra
@@ -215,7 +217,13 @@ sequenceDiagram
 | Middleware | Đứng giữa request và controller để kiểm tra trước khi xử lý, ví dụ `verifyToken` và `checkPermission` |
 
 ### CÁC THUẬT TOÁN CƠ BẢN
-- Băm mật khẩu bằng bcryptjs
+- Băm mật khẩu bằng bcryptjs\
+    Chuỗi kết quả sau khi băm thường có độ dài 60 ký tự, tuân theo cấu trúc chuẩn gồm 3 phần được phân tách bằng dấu $:
+  - Phần 1 (Phiên bản): Xác định phiên bản của thuật toán bcrypt đang sử dụng: `$2b$`
+  - Phần 2 (Cost Factor): Thể hiện số vòng lặp băm theo lũy thừa của 2. (Ví dụ: `10` nghĩa là 1024 vòng lặp). Số này càng lớn, thuật toán chạy càng chậm và càng an toàn
+  - Phần 3 (Salt & Hash): Gồm 22 ký tự đầu là chuỗi salt (được thêm ngẫu nhiên vào mật khẩu) và phần còn lại là chuỗi mật khẩu đã băm
+
+  Vì vậy, mỗi lần gọi `bcrypt.hash(password, 10)` thì bcrypt tự sinh salt mới, nên hash đầy đủ vẫn khác nhau ngay cả khi mật khẩu nhập vào giống nhau.
 ```mermaid
 flowchart TD
     A["User nhập mật khẩu thô\n(plain_password)"] --> B{"Kiểm tra dữ liệu đầu vào\n(password không rỗng?)"}

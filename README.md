@@ -1,15 +1,15 @@
 
 ## GIỚI THIỆU
 
- - Xây dựng website với tính năng đăng nhập đa nền tảng bằng tài khoản nội bộ, gmail, facebook, mail hust
+ Auth-System ra đời để xóa bỏ sự phiền toái đó. Thay vì để người dùng loay hoay với hàng tá tài khoản và thông tin phân mảnh, dự án xây dựng một 'Trạm định danh thông minh'. Hệ thống cho phép người dùng đăng nhập tức thì thông qua Google, Facebook hay tài khoản Bách Khoa (HUST) chỉ với một cú click. Quan trọng hơn, công nghệ ánh xạ định danh của chúng tôi sẽ tự động quy tụ mọi danh tính rời rạc về một hồ sơ người dùng duy nhất, mang lại trải nghiệm liền mạch và nhất quán
  - Ảnh chụp minh họa:
 
 Trang login:\
 ![trang dang nhap](https://github.com/user-attachments/assets/59f9e663-ef75-4707-beef-c41b4968d4ae)
-Trang register:
-<img width="1891" height="876" alt="image" src="https://github.com/user-attachments/assets/41573527-13a5-4fc6-8a74-e92b945585a6" />
-Sau khi đăng nhập:
-<img width="1900" height="872" alt="image" src="https://github.com/user-attachments/assets/099abaf0-d1e6-4da3-86e3-07ef28f2ee44" />
+Trang register:\
+![trang dang ky](https://github.com/user-attachments/assets/41573527-13a5-4fc6-8a74-e92b945585a6)
+Sau khi đăng nhập:\
+![trang dang nhap_thanh_cong](https://github.com/user-attachments/assets/099abaf0-d1e6-4da3-86e3-07ef28f2ee44)
 
 
    
@@ -18,6 +18,7 @@ Sau khi đăng nhập:
 
 - Họ và tên: Nguyễn Thị Khánh Vân
 - MSSV: 20235869
+- Email: nguyenvan2005ty@gmail.com
 
 ## MÔI TRƯỜNG HOẠT ĐỘNG
 
@@ -499,15 +500,15 @@ model Permission {
 ### CÁC PAYLOAD
 
 - Cấu trúc các gói json
-<img width="1788" height="753" alt="image" src="https://github.com/user-attachments/assets/163bfefc-48fe-4e52-93eb-6e2ca8944934" />
+![](https://github.com/user-attachments/assets/163bfefc-48fe-4e52-93eb-6e2ca8944934)
 
-<img width="1796" height="745" alt="image" src="https://github.com/user-attachments/assets/58e35050-8179-4b7e-8a7d-a09f8513a399" />
+![](https://github.com/user-attachments/assets/58e35050-8179-4b7e-8a7d-a09f8513a399)
 
-<img width="1790" height="746" alt="image" src="https://github.com/user-attachments/assets/0309c020-1b8b-48b3-845b-434320d33ed5" />
+![](https://github.com/user-attachments/assets/0309c020-1b8b-48b3-845b-434320d33ed5)
 
-<img width="1788" height="741" alt="image" src="https://github.com/user-attachments/assets/3a758e07-94c3-4ee6-bef7-2b810f672529" />
+![](https://github.com/user-attachments/assets/3a758e07-94c3-4ee6-bef7-2b810f672529)
 
-<img width="1788" height="743" alt="image" src="https://github.com/user-attachments/assets/72333dd1-4b52-4efc-adb4-6aee52cd2de9" />
+![](https://github.com/user-attachments/assets/72333dd1-4b52-4efc-adb4-6aee52cd2de9)
 
 
 ### ĐẶC TẢ HÀM

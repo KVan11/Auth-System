@@ -4,8 +4,8 @@
  - Xây dựng website với tính năng đăng nhập đa nền tảng bằng tài khoản nội bộ, gmail, facebook, mail hust
  - Ảnh chụp minh họa:
 
-Trang login:
- <img width="1917" height="875" alt="image" src="https://github.com/user-attachments/assets/59f9e663-ef75-4707-beef-c41b4968d4ae" />
+Trang login:\
+![trang dang nhap](https://github.com/user-attachments/assets/59f9e663-ef75-4707-beef-c41b4968d4ae)
 Trang register:
 <img width="1891" height="876" alt="image" src="https://github.com/user-attachments/assets/41573527-13a5-4fc6-8a74-e92b945585a6" />
 Sau khi đăng nhập:

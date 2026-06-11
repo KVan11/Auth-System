@@ -28,7 +28,7 @@ Sau khi đăng nhập:\
 - Database: PostgreSQL + thư viện Prisma
 - Auth & Docs: xác thực JWT, tài liệu API bằng Swagger
 - Hệ điều hành: Windows
-- Sơ đồ tích hợp hệ thống:
+- Sơ đồ tích hợp hệ thống:\
 ```mermaid
 flowchart LR
     %% Client & Frontend
@@ -123,6 +123,7 @@ Frontend của sẽ chạy mặc định tại địa chỉ: http://localhost:51
 ### TÍCH HỢP HỆ THỐNG
 
 #### Sơ đồ hệ thống
+
 ```mermaid
 flowchart TB
  subgraph subGraph0["Client Layer"]
@@ -210,6 +211,7 @@ sequenceDiagram
 	API-->>Client: HTTP 200/401/403
 	Client-->>UI: Trả kết quả
  ```
+
 | Thành phần | Vai trò |
 |---|---|
 | Front-end | Hiển thị giao diện cho người dùng, nhận dữ liệu nhập vào, gọi API đăng nhập hoặc đăng ký, lưu token sau khi login thành công |
@@ -224,6 +226,7 @@ sequenceDiagram
   - Phần 3 (Salt & Hash): Gồm 22 ký tự đầu là chuỗi salt (được thêm ngẫu nhiên vào mật khẩu) và phần còn lại là chuỗi mật khẩu đã băm
 
   Vì vậy, mỗi lần gọi `bcrypt.hash(password, 10)` thì bcrypt tự sinh salt mới, nên hash đầy đủ vẫn khác nhau ngay cả khi mật khẩu nhập vào giống nhau.
+
 ```mermaid
 flowchart TD
     A["User nhập mật khẩu thô\n(plain_password)"] --> B{"Kiểm tra dữ liệu đầu vào\n(password không rỗng?)"}
@@ -238,6 +241,7 @@ flowchart TD
     F --> Z
 ```
 - Tạo JWT token
+
 ```mermaid
 flowchart TD
     A["Người dùng đã xác thực thành công"] --> B["Lấy thông tin user từ DB"]
@@ -248,6 +252,7 @@ flowchart TD
     F --> G["Client lưu token và dùng cho các request sau"]
 ```
 - Đăng ký:
+
 ```mermaid
 flowchart TD
     A["User nhập:\nemail, username, password"] --> B{"Kiểm tra email\nđã tồn tại trong DB?"}
@@ -263,6 +268,7 @@ flowchart TD
     F --> G
 ```
 - Đăng nhập
+
 ```mermaid
 flowchart TD
     A["User nhập:\nemail, password"] --> B["Tìm user theo email"]
@@ -277,6 +283,7 @@ flowchart TD
     H --> Z
 ```
 - Đăng nhập bằng Google
+
 ```mermaid
 flowchart TD
     A["User click 'Login with Google'\nFrontend nhận Google ID token"] --> B["POST /api/auth/google\n{ token }"]
@@ -296,6 +303,7 @@ flowchart TD
     L --> Z
 ```
 - Đăng nhập bằng Facebook
+
 ```mermaid
 flowchart TD
     A["User click 'Login with Facebook'\nFrontend nhận access token"] --> B["POST /api/auth/facebook\n{ token }"]
@@ -315,6 +323,7 @@ flowchart TD
     L --> Z
 ```
 - Đăng nhập bằng tài khoản Hust
+
 ```mermaid
 flowchart TD
     A["User nhập\ntaikhoan (HUST ID), matkhau"] --> B["POST /api/auth/hust\n{ taikhoan, matkhau }"]
@@ -334,6 +343,7 @@ flowchart TD
     L --> Z
 ```
 - Xác thực token và phân quyền
+
 ```mermaid
 flowchart TD
     A["Request tới endpoint bảo vệ\nHeader: Authorization: Bearer <token>"] --> B{"Trích xuất token\n(split 'Bearer ')"}
@@ -471,6 +481,7 @@ model Permission {
   role            Role   @relation(fields: [role_id], references: [id])
 }
 ```
+
  #### Bảng **USER**
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |-----|------|----------|--------|

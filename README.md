@@ -72,7 +72,10 @@ flowchart LR
 cd backend
 npm install
 ```
-- Bước 3: tạo .env trong thư mục backend và cấu hình các biến môi trường
+- Bước 3: sao chép `backend/.env.example` thành `backend/.env` rồi cấu hình các biến môi trường
+```powershell
+Copy-Item .env.example .env
+```
 ```bash
 # Kết nối Database PostgreSQL
 DATABASE_URL="postgresql://postgres:mat_khau_db@localhost:5432/ten_db_cua_ban?schema=public"
@@ -104,7 +107,10 @@ Bước 1: Di chuyển sang thư mục frontend và cài đặt:
 cd ../frontend
 npm install
 ```
-- Bước 2: Tạo .env nằm trong thư mục frontend
+- Bước 2: sao chép `frontend/.env.example` thành `frontend/.env` rồi cấu hình các biến môi trường
+```powershell
+Copy-Item .env.example .env
+```
 ```bash
 VITE_GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
 VITE_FB_APP_ID=
@@ -508,12 +514,12 @@ model Permission {
 | `id` | INT | PK, AUTO_INCREMENT | ID quyền |
 | `role_id` | INT | FK (ROLE.id), NOT NULL | Tham chiếu vai trò |
 | `permission_name` | VARCHAR | NOT NULL | Tên quyền (POST_CREATE, USER_VIEW, ...) |
-- Cấu trúc **File:** `backend/.env`
+- Cấu trúc **File:** `backend/.env.example`
    - DATABASE_URL
    - JWT_SECRET
    - GOOGLE_CLIENT_ID
    - HUST_AUTH_API_URL
-- Cấu trúc **File:** `frontend/.env`
+- Cấu trúc **File:** `frontend/.env.example`
    - VITE_GOOGLE_CLIENT_ID
    - VITE_FB_APP_ID
 ### CÁC PAYLOAD

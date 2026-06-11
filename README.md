@@ -1,14 +1,14 @@
 
 ## GIỚI THIỆU
 
- Auth-System ra đời để xóa bỏ sự phiền toái đó. Thay vì để người dùng loay hoay với hàng tá tài khoản và thông tin phân mảnh, dự án xây dựng một 'Trạm định danh thông minh'. Hệ thống cho phép người dùng đăng nhập tức thì thông qua Google, Facebook hay tài khoản Bách Khoa (HUST) chỉ với một cú click. Quan trọng hơn, công nghệ ánh xạ định danh của chúng tôi sẽ tự động quy tụ mọi danh tính rời rạc về một hồ sơ người dùng duy nhất, mang lại trải nghiệm liền mạch và nhất quán
- - Ảnh chụp minh họa:
+Auth-System ra đời để xóa bỏ sự phiền toái đó. Thay vì để người dùng loay hoay với hàng tá tài khoản và thông tin phân mảnh, dự án xây dựng một 'Trạm định danh thông minh'. Hệ thống cho phép người dùng đăng nhập tức thì thông qua Google, Facebook hay tài khoản Bách Khoa (HUST) chỉ với một cú click. Quan trọng hơn, công nghệ ánh xạ định danh của chúng tôi sẽ tự động quy tụ mọi danh tính rời rạc về một hồ sơ người dùng duy nhất, mang lại trải nghiệm liền mạch và nhất quán
+- Ảnh chụp minh họa:
 
-Trang login:\
+Trang login:
 ![trang dang nhap](https://github.com/user-attachments/assets/59f9e663-ef75-4707-beef-c41b4968d4ae)
-Trang register:\
+Trang register:
 ![trang dang ky](https://github.com/user-attachments/assets/41573527-13a5-4fc6-8a74-e92b945585a6)
-Sau khi đăng nhập:\
+Sau khi đăng nhập:
 ![trang dang nhap_thanh_cong](https://github.com/user-attachments/assets/099abaf0-d1e6-4da3-86e3-07ef28f2ee44)
 
 
@@ -28,7 +28,7 @@ Sau khi đăng nhập:\
 - Database: PostgreSQL + thư viện Prisma
 - Auth & Docs: xác thực JWT, tài liệu API bằng Swagger
 - Hệ điều hành: Windows
-- Sơ đồ tích hợp hệ thống:\
+- Sơ đồ tích hợp hệ thống:
 ```mermaid
 flowchart LR
     %% Client & Frontend
@@ -219,7 +219,7 @@ sequenceDiagram
 | Middleware | Đứng giữa request và controller để kiểm tra trước khi xử lý, ví dụ `verifyToken` và `checkPermission` |
 
 ### CÁC THUẬT TOÁN CƠ BẢN
-- Băm mật khẩu bằng bcryptjs\
+- Băm mật khẩu bằng bcryptjs
     Chuỗi kết quả sau khi băm thường có độ dài 60 ký tự, tuân theo cấu trúc chuẩn gồm 3 phần được phân tách bằng dấu $:
   - Phần 1 (Phiên bản): Xác định phiên bản của thuật toán bcrypt đang sử dụng: `$2b$`
   - Phần 2 (Cost Factor): Thể hiện số vòng lặp băm theo lũy thừa của 2. (Ví dụ: `10` nghĩa là 1024 vòng lặp). Số này càng lớn, thuật toán chạy càng chậm và càng an toàn

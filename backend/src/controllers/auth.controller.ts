@@ -51,24 +51,3 @@ export const hustLogin = async (req: Request, res: Response) => {
     res.status(401).json({ error: error.message });
   }
 }
-
-export const getUsers = async (req: Request, res: Response) => {
-  try {
-    const users = await AuthService.getAllUsers();
-    res.status(200).json(users);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-export const deleteUser = async (req: Request, res: Response) => {
-  try{
-    const { id } = req.params;
-
-    await AuthService.removeUser(Number(id));
-    res.status(200).json({ message: `Xóa người dùng thành công` });
-  }
-  catch (error: any) {
-    res.status(500).json({ error: "Lỗi khi xóa người dùng hoặc id không tồn tại" });
-  }
-};

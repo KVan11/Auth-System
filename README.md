@@ -403,46 +403,8 @@ erDiagram
         String permission_name
     }
 
-    Post {
-        Int id PK
-        Int user_id FK
-        DateTime created_date
-        DateTime updated_date
-        Int total_point
-        String content
-        String image
-        DateTime expired_time
-        String tag_list
-    }
-
-    Category {
-        Int id PK
-        String category_name UK
-    }
-
-    CatePost {
-        Int post_id PK, FK
-        Int category_id PK, FK
-    }
-
-    Vote {
-        Int id PK
-        Int post_id FK
-        String tag_name
-        Int point
-        Int user_id FK
-    }
-
     Role ||--o{ User : has
     Role ||--o{ Permission : grants
-
-    User ||--o{ Post : creates
-    User ||--o{ Vote : gives
-
-    Post ||--o{ Vote : receives
-
-    Post ||--o{ CatePost : categorized
-    Category ||--o{ CatePost : contains
 ```
 - Giải thích các table, và một vài table.field quan trọng
 ```prisma
@@ -468,9 +430,7 @@ model User {
   created_date DateTime @default(now())
   updated_date DateTime @updatedAt
   role_id      Int
-  posts        Post[]
   role         Role     @relation(fields: [role_id], references: [id])
-  vote         Vote[]
 }
 
 model Role {
@@ -513,7 +473,7 @@ model Permission {
 |-----|------|----------|--------|
 | `id` | INT | PK, AUTO_INCREMENT | ID quyền |
 | `role_id` | INT | FK (ROLE.id), NOT NULL | Tham chiếu vai trò |
-| `permission_name` | VARCHAR | NOT NULL | Tên quyền (POST_CREATE, USER_VIEW, ...) |
+| `permission_name` | VARCHAR | NOT NULL | Tên quyền |
 - Cấu trúc **File:** `backend/.env.example`
    - DATABASE_URL
    - JWT_SECRET

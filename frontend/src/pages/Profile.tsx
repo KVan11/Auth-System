@@ -18,7 +18,6 @@ const Profile = () => {
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        alert('Đăng xuất thành công!');
         navigate('/login');
     };
 

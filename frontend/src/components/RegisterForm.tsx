@@ -14,6 +14,7 @@ export const RegisterForm = () => {
   });
 
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   const fields = [
     { name: 'email', label: 'Email', type: 'email', autoComplete: 'email' },
@@ -39,10 +40,11 @@ export const RegisterForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
 
     // Kiểm tra mật khẩu khớp
     if (formData.password !== formData.confirmPassword) {
-      alert('Mật khẩu xác nhận không khớp!');
+      setError('Mật khẩu xác nhận không khớp!');
       return;
     }
 
@@ -52,13 +54,12 @@ export const RegisterForm = () => {
         username: formData.username,
         password: formData.password,
       });
-      alert('Đăng ký thành công! Hãy đăng nhập.');
       navigate('/login');
     } catch (error: unknown) {
       const apiError = error as { response?: { data?: { error?: string } } };
       const message = apiError.response?.data?.error ?? 'Đăng ký thất bại';
 
-      alert(message);
+      setError(message);
     }
   };
 
@@ -68,8 +69,11 @@ export const RegisterForm = () => {
       submitLabel="Đăng ký"
       values={formData}
       fields={fields}
+      error={error}
+      onError={setError}
       onSubmit={handleSubmit}
       onChange={(name, value) => {
+        setError('');
         setFormData((prev) => ({ ...prev, [name]: value }));
       }}
       footer={

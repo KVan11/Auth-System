@@ -1,6 +1,7 @@
 import type { ReactNode, FormEvent } from 'react';
 import { useNavigate } from "react-router-dom";
-import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { GoogleOAuthProvider, GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import { isAxiosError } from 'axios';
 import axiosClient from '../api/axiosClient';
 import { Input } from './ui/Input';
 
@@ -19,6 +20,8 @@ type AuthFormProps<T extends string> = {
   fields: readonly FormField<T>[];
   onChange: (name: T, value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  error: string;
+  onError: (message: string) => void;
   footer?: ReactNode;
 };
 
@@ -29,25 +32,27 @@ export const AuthForm = <T extends string>({
   fields,
   onChange,
   onSubmit,
+  error,
+  onError,
   footer,
 }: AuthFormProps<T>) => {
   const navigate = useNavigate();
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const facebookAppId = import.meta.env.VITE_FB_APP_ID;
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    onError('');
     try {
       const res = await axiosClient.post('/auth/google', {
         token: credentialResponse.credential,
       });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      alert('Đăng nhập thành công!');
       navigate('/profile');
     }
-    catch (error: any) {
+    catch (error: unknown) {
       console.error('Google Auth Error:', error);
-      alert('Không thể xác thực với hệ thống. Vui lòng thử lại.');
+      onError('Không thể xác thực với hệ thống. Vui lòng thử lại.');
     }
   }
   const responseFacebook = async (accessToken: string) => {
@@ -57,18 +62,18 @@ export const AuthForm = <T extends string>({
       });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      alert('Đăng nhập thành công!');
       navigate('/profile');
     }
-    catch (error: any) {
+    catch (error: unknown) {
       console.error('Fb Login Error:', error);
-      alert('Lỗi đăng nhập Fb');
+      onError('Lỗi đăng nhập Fb');
     }
   };
 
   const handleFacebookLogin = async () => {
+    onError('');
     if (!facebookAppId) {
-      alert('Thiếu VITE_FB_APP_ID trong file .env');
+      onError('Thiếu VITE_FB_APP_ID trong file .env');
       return;
     }
 
@@ -78,7 +83,7 @@ export const AuthForm = <T extends string>({
       window.location.hostname === '127.0.0.1';
 
     if (!isSecureOrigin) {
-      alert('Facebook login chỉ hoạt động trên HTTPS hoặc localhost.');
+      onError('Facebook login chỉ hoạt động trên HTTPS hoặc localhost.');
       return;
     }
 
@@ -96,7 +101,7 @@ export const AuthForm = <T extends string>({
     );
 
     if (!popup) {
-      alert('Trình duyệt đã chặn cửa sổ đăng nhập Facebook.');
+      onError('Trình duyệt đã chặn cửa sổ đăng nhập Facebook.');
       return;
     }
 
@@ -133,16 +138,17 @@ export const AuthForm = <T extends string>({
   };
 
   const handleHustLogin = async () => {
+    onError('');
     const emailHust = values['email' as T];
     const passwordHust = values['password' as T];
 
     if(!emailHust || !passwordHust) {
-      alert('Hãy nhập email và mật khẩu Hust!');
+      onError('Hãy nhập email và mật khẩu Hust!');
       return;
     }
 
     if(!emailHust.endsWith('@sis.hust.edu.vn') && !emailHust.endsWith('@hust.edu.vn')) {
-      alert('Hãy sử dụng mail Hust');
+      onError('Hãy sử dụng mail Hust');
       return;
     }
 
@@ -154,12 +160,13 @@ export const AuthForm = <T extends string>({
 
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      alert('Đăng nhập thành công');
       navigate('/profile');
     }
-    catch (error: any) {
-      const message = error.response?.data?.error ?? 'Xác thực HUST thất bại';
-      alert(message);
+    catch (error: unknown) {
+      const message = isAxiosError<{ error?: string }>(error)
+        ? error.response?.data?.error ?? 'Xác thực HUST thất bại'
+        : 'Xác thực HUST thất bại';
+      onError(message);
     }
   }
 
@@ -170,6 +177,11 @@ export const AuthForm = <T extends string>({
           {title}
         </h2>
         <form onSubmit={onSubmit} className="grid gap-4">
+          {error ? (
+            <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          ) : null}
           {fields.map((field) => (
             <Input
               key={field.name}
@@ -201,7 +213,7 @@ export const AuthForm = <T extends string>({
         <div className="flex flex-col items-center gap-3">
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
-            onError={() => console.log('Login Failed')}
+            onError={() => onError('Không thể đăng nhập bằng Google. Vui lòng thử lại.')}
             theme="outline"
             shape="pill"
             text="continue_with"

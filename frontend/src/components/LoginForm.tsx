@@ -11,6 +11,7 @@ export const LoginForm = () => {
     password: '',
   });
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   const fields = [
     { name: 'email', label: 'Email', type: 'email', autoComplete: 'email' },
@@ -24,18 +25,18 @@ export const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
 
     try {
       const res = await authApi.login(formData);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      alert('Đăng nhập thành công!');
       navigate('/profile'); // Về trang chủ
     } catch (error: unknown) {
       const apiError = error as { response?: { data?: { error?: string } } };
       const message = apiError.response?.data?.error ?? 'Đăng nhập thất bại';
 
-      alert(message);
+      setError(message);
     }
   };
 
@@ -45,8 +46,11 @@ export const LoginForm = () => {
       submitLabel="Đăng nhập"
       values={formData}
       fields={fields}
+      error={error}
+      onError={setError}
       onSubmit={handleSubmit}
       onChange={(name, value) => {
+        setError('');
         setFormData((prev) => ({ ...prev, [name]: value }));
       }}
     />

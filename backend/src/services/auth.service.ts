@@ -96,21 +96,6 @@ export const loginUser = async (email: string, password: string) => {
   };
 };
 
-export const getAllUsers = async () => {
-  return await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      created_date: true,
-      role: {
-        select: {
-          role_name: true
-        }
-      }
-    }
-  })
-}
 export const googleLoginUser = async (credential: string) => {
   if (!credential) {
     throw new Error('Thiếu token Google');
@@ -385,10 +370,4 @@ export const hustLoginUser = async (taikhoan: string, matkhau: string) => {
       permissions,
     },
   };
-};
-
-export const removeUser = async (id: number) => {
-  return await prisma.user.delete({
-    where: { id },
-  });
 };

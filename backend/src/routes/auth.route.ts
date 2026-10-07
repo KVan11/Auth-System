@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { register, login, googleLogin, facebookLogin, hustLogin, getUsers, deleteUser } from '../controllers/auth.controller.js';
-import { verifyToken, checkPermission } from '../middlewares/auth.middleware.js';
+import { register, login, googleLogin, facebookLogin, hustLogin } from '../controllers/auth.controller.js';
 
 const router = Router();
 /**
@@ -131,52 +130,5 @@ router.post('/facebook', facebookLogin);
  *     description: Tai khoan hoac mat khau khong chinh xac
  */
 router.post('/hust', hustLogin);
-
-/**
- * @swagger
- * /api/auth/users:
- *  get:
- *   summary: Lay danh sach toan bo nguoi dung
- *   description: Chi admin moi co quyen truy cap endpoint nay
- *   tags: [Auth]
- *   security:
- *    - bearerAuth: []
- *   responses:
- *    200:
- *     description: Tra ve danh sach nguoi dung
- *    401:
- *     description: Khong co quyen truy cap do khong dang nhap hoac token khong hop le
- *    403:
- *     description: Ban khong co quyen truy cap do khong phai admin
- */
-router.get('/users', verifyToken, checkPermission('USER_VIEW'), getUsers);
-
-/**
- * @swagger
- * /api/auth/users/{id}:
- *  delete:
- *   summary: Xoa nguoi dung
- *   description: Chi admin moi co quyen xoa nguoi dung
- *   tags: [Auth]
- *   security:
- *    - bearerAuth: []
- *   parameters:
- *    - in: path
- *      name: id
- *      required: true
- *      schema:
- *       type: integer
- *       description: ID cua nguoi dung can xoa
- *   responses:
- *    200:
- *     description: Xoa nguoi dung thanh cong
- *    403:
- *     description: Ban khong co quyen truy cap do khong dang nhap hoac token khong hop le
- *    404:
- *     description: Khong tim thay nguoi dung voi ID da cho
- *    500:
- *     description: Loi server khi xoa nguoi dung
- */
-router.delete('/users/:id', verifyToken, checkPermission('USER_DELETE'), deleteUser);
 
 export default router;

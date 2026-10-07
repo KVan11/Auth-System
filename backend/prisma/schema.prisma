@@ -18,9 +18,7 @@ model User {
   created_date DateTime @default(now())
   updated_date DateTime @updatedAt
   role_id      Int
-  posts        Post[]
   role         Role     @relation(fields: [role_id], references: [id])
-  vote         Vote[]
 }
 
 model Role {
@@ -35,46 +33,4 @@ model Permission {
   role_id         Int
   permission_name String
   role            Role   @relation(fields: [role_id], references: [id])
-}
-
-model Post {
-  id           Int        @id @default(autoincrement())
-  user_id      Int
-  created_date DateTime   @default(now())
-  updated_date DateTime   @updatedAt
-  total_point  Int        @default(0)
-  content      String
-  image        String?
-  expired_time DateTime
-  tag_list     String
-  categories   CatePost[]
-  user         User       @relation(fields: [user_id], references: [id])
-  votes        Vote[]
-}
-
-model Category {
-  id            Int        @id @default(autoincrement())
-  category_name String     @unique
-  posts         CatePost[]
-}
-
-model CatePost {
-  post_id     Int
-  category_id Int
-  categories  Category @relation(fields: [category_id], references: [id])
-  posts       Post     @relation(fields: [post_id], references: [id])
-
-  @@id([post_id, category_id])
-}
-
-model Vote {
-  id       Int    @id @default(autoincrement())
-  post_id  Int
-  tag_name String
-  point    Int
-  user_id  Int
-  post     Post   @relation(fields: [post_id], references: [id])
-  user     User   @relation(fields: [user_id], references: [id])
-
-  @@unique([post_id, user_id])
 }

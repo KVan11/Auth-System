@@ -1,0 +1,16 @@
+node_modules/
+.github
+.specify
+specs
+docs
+dist/
+build/
+coverage/
+*.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.auth-test-inventory/
+.DS_Store
+Thumbs.db

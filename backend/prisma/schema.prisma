@@ -8,17 +8,30 @@ datasource db {
 }
 
 model User {
+  id             Int            @id @default(autoincrement())
+  username       String
+  password       String
+  email          String         @unique
+  google_id      String?        @unique
+  facebook_id    String?        @unique
+  hust_id        String?        @unique
+  created_date   DateTime       @default(now())
+  updated_date   DateTime       @updatedAt
+  role_id        Int
+  role           Role           @relation(fields: [role_id], references: [id])
+  refresh_tokens RefreshToken[]
+}
+
+// Chỉ lưu SHA-256 của refresh token, không bao giờ lưu token gốc
+model RefreshToken {
   id           Int      @id @default(autoincrement())
-  username     String
-  password     String
-  email        String   @unique
-  google_id    String?  @unique
-  facebook_id  String?  @unique
-  hust_id      String?  @unique
+  user_id      Int
+  token_hash   String   @unique
+  expires_at   DateTime
   created_date DateTime @default(now())
-  updated_date DateTime @updatedAt
-  role_id      Int
-  role         Role     @relation(fields: [role_id], references: [id])
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
 }
 
 model Role {

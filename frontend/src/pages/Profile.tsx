@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import type { User } from '../types/auth';
+import authApi from '../api/authApi';
+import { clearAuthSession, getRefreshToken } from '../api/authStorage';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -15,10 +17,16 @@ const Profile = () => {
         }
     }
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
+    const handleLogout = async () => {
+        const refreshToken = getRefreshToken();
+        try {
+            if (refreshToken) await authApi.logout(refreshToken);
+        } catch {
+            // Vẫn đăng xuất phía client kể cả khi server không phản hồi
+        } finally {
+            clearAuthSession();
+            navigate('/login');
+        }
     };
 
     if (!user) {

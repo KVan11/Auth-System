@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { register, login, googleLogin, facebookLogin, hustLogin } from '../controllers/auth.controller.js';
+import { register, login, googleLogin, facebookLogin, hustLogin, refresh, logout, me } from '../controllers/auth.controller.js';
+import { verifyToken } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 /**
@@ -130,5 +131,71 @@ router.post('/facebook', facebookLogin);
  *     description: Tai khoan hoac mat khau khong chinh xac
  */
 router.post('/hust', hustLogin);
+
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *  post:
+ *   summary: Cap access token moi bang refresh token
+ *   tags: [Auth]
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       type: object
+ *       properties:
+ *        refreshToken:
+ *         type: string
+ *   responses:
+ *    200:
+ *     description: Tra ve accessToken va refreshToken moi
+ *    400:
+ *     description: Thieu refresh token
+ *    401:
+ *     description: Refresh token khong hop le hoac da het han
+ */
+router.post('/refresh', refresh);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *  post:
+ *   summary: Dang xuat
+ *   tags: [Auth]
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       type: object
+ *       properties:
+ *        refreshToken:
+ *         type: string
+ *   responses:
+ *    200:
+ *     description: Dang xuat thanh cong
+ *    400:
+ *     description: Thieu refresh token
+ */
+router.post('/logout', logout);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *  get:
+ *   summary: Lay thong tin nguoi dung hien tai
+ *   tags: [Auth]
+ *   security:
+ *    - bearerAuth: []
+ *   responses:
+ *    200:
+ *     description: Thong tin nguoi dung
+ *    401:
+ *     description: Access token thieu, khong hop le hoac da het han
+ *    404:
+ *     description: Nguoi dung khong ton tai
+ */
+router.get('/me', verifyToken, me);
 
 export default router;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authApi from '../api/authApi';
+import { saveAuthSession } from '../api/authStorage';
 import { AuthForm } from './AuthForm';
 
 type LoginFields = 'email' | 'password';
@@ -29,8 +30,7 @@ export const LoginForm = () => {
 
     try {
       const res = await authApi.login(formData);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      saveAuthSession(res.data);
       navigate('/profile'); // Về trang chủ
     } catch (error: unknown) {
       const apiError = error as { response?: { data?: { error?: string } } };

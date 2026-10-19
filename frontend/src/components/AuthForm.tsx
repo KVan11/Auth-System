@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { GoogleOAuthProvider, GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { isAxiosError } from 'axios';
 import axiosClient from '../api/axiosClient';
+import { saveAuthSession } from '../api/authStorage';
 import { Input } from './ui/Input';
+import type { AuthResponse } from '../types/auth';
 
 type FormField<T extends string> = {
   name: T;
@@ -43,11 +45,10 @@ export const AuthForm = <T extends string>({
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     onError('');
     try {
-      const res = await axiosClient.post('/auth/google', {
+      const res = await axiosClient.post<AuthResponse>('/auth/google', {
         token: credentialResponse.credential,
       });
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      saveAuthSession(res.data);
       navigate('/profile');
     }
     catch (error: unknown) {
@@ -57,11 +58,10 @@ export const AuthForm = <T extends string>({
   }
   const responseFacebook = async (accessToken: string) => {
     try {
-      const res = await axiosClient.post('/auth/facebook', {
+      const res = await axiosClient.post<AuthResponse>('/auth/facebook', {
         token: accessToken,
       });
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      saveAuthSession(res.data);
       navigate('/profile');
     }
     catch (error: unknown) {
@@ -153,13 +153,12 @@ export const AuthForm = <T extends string>({
     }
 
     try {
-      const res = await axiosClient.post('/auth/hust', {
+      const res = await axiosClient.post<AuthResponse>('/auth/hust', {
         taikhoan: emailHust,
         matkhau: passwordHust,
       });
 
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      saveAuthSession(res.data);
       navigate('/profile');
     }
     catch (error: unknown) {

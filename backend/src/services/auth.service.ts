@@ -1,24 +1,47 @@
-import { PrismaClient } from "../../generated/prisma/client.js";
-import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcryptjs";
-import jwt from 'jsonwebtoken';
 import { OAuth2Client } from "google-auth-library";
+import { prisma } from "../lib/prisma.js";
+import { issueTokens } from "./token.service.js";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-export const prisma = new PrismaClient({ adapter });
+export { prisma };
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret_key';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const generateToken = (user: any) => {
-  const permissions = user.role.permissions.map((p: any) => p.permission_name);
+
+const toUserResponse = (user: any) => ({
+  id: user.id,
+  email: user.email,
+  username: user.username,
+  role: user.role.role_name,
+  permissions: user.role.permissions.map((p: any) => p.permission_name),
+});
+
+// Mọi phương thức đăng nhập thành công đều đi qua đây để nhận access + refresh token
+const buildLoginResult = async (user: any) => {
+  const { accessToken, refreshToken } = await issueTokens(user);
+
   return {
-    token: jwt.sign(
-      { userId: user.id, role: user.role.role_name, permissions },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    ),
-    permissions
+    accessToken,
+    refreshToken,
+    token: accessToken, // alias tương thích ngược, sẽ bỏ sau
+    user: toUserResponse(user),
   };
+};
+
+export const getCurrentUser = async (userId: number) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      role: {
+        include: {
+          permissions: true
+        }
+      }
+    }
+  });
+
+  if (!user) throw new Error('Người dùng không tồn tại');
+
+  return toUserResponse(user);
 };
 
 export const registerUser = async (userData: any) => {
@@ -82,18 +105,7 @@ export const loginUser = async (email: string, password: string) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error('Mật khẩu sai');
 
-  const { token, permissions } = generateToken(user);
-
-  return {
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      role: user.role.role_name,
-      permissions,
-    },
-  };
+  return buildLoginResult(user);
 };
 
 export const googleLoginUser = async (credential: string) => {
@@ -180,18 +192,7 @@ export const googleLoginUser = async (credential: string) => {
     }
   }
 
-  const { token, permissions } = generateToken(user);;
-
-  return {
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      role: user.role.role_name,
-      permissions,
-    },
-  };
+  return buildLoginResult(user);
 };
 
 export const facebookLoginUser = async (token: string) => {
@@ -259,18 +260,7 @@ export const facebookLoginUser = async (token: string) => {
     }
   }
 
-  const { token: jwtToken, permissions } = generateToken(user);
-
-  return {
-    token: jwtToken,
-    user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      role: user.role.role_name,
-      permissions,
-    },
-  }
+  return buildLoginResult(user);
 };
 
 export const hustLoginUser = async (taikhoan: string, matkhau: string) => {
@@ -286,7 +276,6 @@ export const hustLoginUser = async (taikhoan: string, matkhau: string) => {
   }).toString();
 
   const fullUrl = `${apiUrl}?${queryParams}`;
-  console.log("Đang gọi URL:", fullUrl);
   const response = await fetch(fullUrl, {
     method: 'GET',
     headers: {
@@ -358,16 +347,5 @@ export const hustLoginUser = async (taikhoan: string, matkhau: string) => {
       })
     }
   }
-  const { token, permissions } = generateToken(user);
-
-  return {
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      role: user.role.role_name,
-      permissions,
-    },
-  };
+  return buildLoginResult(user);
 };

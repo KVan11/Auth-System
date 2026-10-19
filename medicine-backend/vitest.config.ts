@@ -10,19 +10,12 @@ export default defineConfig({
     passWithNoTests: false,
 
     include: [
-      'tests/config/**/*.test.ts',
-      'tests/api/**/*.test.ts',
-      'tests/auth/**/*.test.ts',
-      'tests/lifecycle/**/*.test.ts',
-      'tests/security/**/*.test.ts',
-      'tests/extension/**/*.test.ts',
+      'tests/**/*.test.ts',
     ],
 
     exclude: [
       ...configDefaults.exclude,
-      'tests/database/**',
-      'tests/authority/**',
-      'tests/helpers/**',
+      'tests/**/*.integration.test.ts',
     ],
   },
 });

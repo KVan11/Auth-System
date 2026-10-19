@@ -6,8 +6,14 @@ export interface User {
   permissions?: string[];
 }
 
-export interface AuthResponse {
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface AuthResponse extends AuthTokens {
   message: string;
-  token: string;
+  /** @deprecated alias của accessToken, giữ để tương thích */
+  token?: string;
   user: User;
 }

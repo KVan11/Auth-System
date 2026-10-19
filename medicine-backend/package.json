@@ -7,9 +7,7 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "test": "vitest run --config vitest.config.ts",
-    "test:database": "vitest run --config vitest.database.config.ts",
-    "test:authority": "vitest run --config vitest.authority.config.ts"
+    "test": "vitest run --config vitest.config.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +16,6 @@
   "dependencies": {
     "dotenv": "17.3.1",
     "express": "5.2.1",
-    "helmet": "8.1.0",
     "pg": "8.20.0"
   },
   "devDependencies": {

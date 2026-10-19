@@ -12,12 +12,17 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
         return res.status(401).json({ error: "Bạn chưa đăng nhập (Thiếu Token)" });
     }
 
+    // Chỉ chấp nhận access token (JWT). Refresh token là chuỗi ngẫu nhiên nên luôn bị từ chối ở đây.
+    // Trả 401 để frontend biết cần gọi /api/auth/refresh; 403 dành cho thiếu quyền.
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
         (req as any).user = decoded; // Lưu thông tin giải mã (id, permissions...) vào req.user
         next();
     } catch (error) {
-        return res.status(403).json({ error: "Token không hợp lệ hoặc đã hết hạn" });
+        if (error instanceof jwt.TokenExpiredError) {
+            return res.status(401).json({ error: "Access token đã hết hạn" });
+        }
+        return res.status(401).json({ error: "Token không hợp lệ hoặc đã hết hạn" });
     }
 };
 

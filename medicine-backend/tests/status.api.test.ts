@@ -11,8 +11,13 @@ const rawPgError = () =>
     code: '28P01',
   });
 
+// Status không cần đăng nhập: nếu route này gọi xác minh định danh thì test thất bại
+const verifyIdentity = vi.fn(async () => {
+  throw new Error('status must not verify identity');
+});
+
 const buildApp = (checkDatabase: () => Promise<void> = async () => {}) =>
-  createApp({ checkDatabase, frontendOrigin: FRONTEND_ORIGIN });
+  createApp({ checkDatabase, verifyIdentity, frontendOrigin: FRONTEND_ORIGIN });
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -72,6 +77,7 @@ describe('GET /api/medicine/status', () => {
     expect(withToken.body).toEqual(anonymous.body);
     expect(Object.keys(anonymous.body).sort()).toEqual(['database', 'status']);
     expect(withToken.text).not.toContain('some.jwt.token');
+    expect(verifyIdentity).not.toHaveBeenCalled();
   });
 
   it('does not expose framework details', async () => {

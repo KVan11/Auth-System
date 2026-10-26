@@ -67,12 +67,21 @@ const Profile = () => {
                     </p> */}
                 </div>
 
-                <button
-                    onClick={handleLogout}
-                    className="mt-6 rounded-xl bg-red-600 px-4 py-2.5 font-semibold text-white transition hover:bg-red-700"
-                >
-                    Đăng xuất
-                </button>
+                <div className="mt-6 flex flex-wrap gap-3">
+                    {/* Quyền vào do Medicine backend quyết định, không dựa vào user lưu ở trình duyệt */}
+                    <button
+                        onClick={() => navigate('/medicine')}
+                        className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white transition hover:bg-blue-700"
+                    >
+                        Vào khu vực Medicine
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="rounded-xl bg-red-600 px-4 py-2.5 font-semibold text-white transition hover:bg-red-700"
+                    >
+                        Đăng xuất
+                    </button>
+                </div>
             </div>
         </div>
     );

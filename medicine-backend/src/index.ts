@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { createApp } from './app.js';
+import { createJwtIdentityVerifier } from './auth/identity.js';
 import { ConfigError, loadConfig, type MedicineConfig } from './config.js';
 import { createMedicineDb, type MedicineDb } from './db.js';
 
@@ -13,7 +14,11 @@ export interface RunningServer {
 }
 
 export const startServer = async ({ config, db }: { config: MedicineConfig; db: MedicineDb }): Promise<RunningServer> => {
-  const app = createApp({ checkDatabase: () => db.checkConnection(), frontendOrigin: config.frontendOrigin });
+  const app = createApp({
+    checkDatabase: () => db.checkConnection(),
+    verifyIdentity: createJwtIdentityVerifier(config.jwtSecret),
+    frontendOrigin: config.frontendOrigin,
+  });
   const server = createServer(app);
 
   await new Promise<void>((resolve, reject) => {

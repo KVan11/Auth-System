@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'secret_key';
+import { getJwtSecret } from '../lib/jwtSecret.js';
 
 // 1. Hàm xác thực Token (Để biết người dùng là ai)
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
@@ -14,8 +13,10 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
 
     // Chỉ chấp nhận access token (JWT). Refresh token là chuỗi ngẫu nhiên nên luôn bị từ chối ở đây.
     // Trả 401 để frontend biết cần gọi /api/auth/refresh; 403 dành cho thiếu quyền.
+    // Lấy khoá ngoài try: thiếu cấu hình là lỗi server (500), không phải lỗi token của người dùng
+    const secret = getJwtSecret();
     try {
-        const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+        const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] });
         (req as any).user = decoded; // Lưu thông tin giải mã (id, permissions...) vào req.user
         next();
     } catch (error) {

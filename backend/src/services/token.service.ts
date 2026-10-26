@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../lib/jwtSecret.js';
 import { prisma } from '../lib/prisma.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret_key';
 export const ACCESS_TOKEN_EXPIRES_IN = '15m';
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 ngày
 
@@ -24,7 +24,7 @@ const signAccessToken = (user: AuthUser) => {
   const permissions = user.role.permissions.map((p) => p.permission_name);
   const accessToken = jwt.sign(
     { userId: user.id, role: user.role.role_name, permissions },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
   );
   return { accessToken, permissions };

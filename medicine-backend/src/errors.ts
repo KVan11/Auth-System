@@ -21,6 +21,11 @@ export const databaseUnavailable = (cause?: unknown) =>
 
 export const notFound = () => new AppError(404, 'NOT_FOUND', 'Không tìm thấy API.');
 
+export const unauthenticated = () =>
+  new AppError(401, 'MEDICINE_UNAUTHENTICATED', 'Bạn cần đăng nhập để dùng chức năng này.');
+
+export const forbidden = () => new AppError(403, 'MEDICINE_FORBIDDEN', 'Bạn không có quyền thực hiện thao tác này.');
+
 export const toErrorResponse = (error: unknown): { status: number; body: ErrorBody } => {
   if (error instanceof AppError) {
     return { status: error.status, body: { error: { code: error.code, message: error.message } } };

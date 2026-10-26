@@ -2,6 +2,7 @@ export interface MedicineConfig {
   databaseUrl: string;
   port: number;
   frontendOrigin: string;
+  jwtSecret: string;
 }
 
 export class ConfigError extends Error {
@@ -60,9 +61,20 @@ const readFrontendOrigin = (env: Env) => {
   return value;
 };
 
-// Chỉ đọc cấu hình của Medicine
+// Khoá xác minh access token, phải trùng JWT_SECRET của Auth; bắt buộc, không có giá trị mặc định
+// (khoá mặc định nằm trong code thì ai đọc code cũng tự ký được token hợp lệ)
+const readJwtSecret = (env: Env) => {
+  const value = env.MEDICINE_JWT_SECRET?.trim();
+  if (!value) {
+    throw new ConfigError('Thiếu MEDICINE_JWT_SECRET (phải trùng JWT_SECRET của Auth backend).');
+  }
+  return value;
+};
+
+// Chỉ đọc biến MEDICINE_*; không lấy biến cấu hình của Auth thay thế
 export const loadConfig = (env: Env = process.env): MedicineConfig => ({
   databaseUrl: readDatabaseUrl(env),
   port: readPort(env),
   frontendOrigin: readFrontendOrigin(env),
+  jwtSecret: readJwtSecret(env),
 });

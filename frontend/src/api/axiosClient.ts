@@ -30,8 +30,9 @@ type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 let refreshPromise: Promise<string> | null = null;
 
-// Các request 401 cùng lúc dùng chung một lần refresh (refresh token bị xoay vòng sau mỗi lần dùng)
-const refreshAccessToken = () => {
+// Các request 401 cùng lúc dùng chung một lần refresh (refresh token bị xoay vòng sau mỗi lần dùng).
+// Export để client Medicine dùng chung, không có cơ chế refresh thứ hai.
+export const refreshAccessToken = () => {
   if (!refreshPromise) {
     const refreshToken = getRefreshToken();
     const request = refreshToken
@@ -47,7 +48,7 @@ const refreshAccessToken = () => {
   return refreshPromise;
 };
 
-const redirectToLogin = () => {
+export const redirectToLogin = () => {
   clearAuthSession();
   if (window.location.pathname !== '/login') window.location.assign('/login');
 };

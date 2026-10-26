@@ -1,15 +1,28 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
-import { beforeEach, describe, expect, it } from 'vitest';
-import medicineApi, { describeMedicineError, medicineClient } from '../../src/api/medicineApi';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { redirectToLogin, refreshAccessToken } from '../../src/api/axiosClient';
+import medicineApi, { describeMedicineError, isMedicineForbidden, medicineClient } from '../../src/api/medicineApi';
+
+// Cơ chế refresh của Auth được giả lập; test chỉ kiểm tra Medicine dùng chung nó đúng cách
+vi.mock('../../src/api/axiosClient', () => ({
+  default: {},
+  refreshAccessToken: vi.fn(),
+  redirectToLogin: vi.fn(),
+}));
+const refresh = vi.mocked(refreshAccessToken);
+const redirect = vi.mocked(redirectToLogin);
 
 type Reply = { status: number; data?: unknown } | 'network-error';
 
 const requests: InternalAxiosRequestConfig[] = [];
 let reply: Reply;
+// Nếu có, các phản hồi trong hàng đợi được dùng trước `reply` (cho luồng 401 → refresh → thử lại)
+let queued: Reply[] = [];
 
 // Adapter giả thay cho HTTP thật
 medicineClient.defaults.adapter = async (config) => {
   requests.push(config);
+  const reply = queued.shift() ?? currentReply();
   if (reply === 'network-error') {
     throw new AxiosError('Network Error', AxiosError.ERR_NETWORK, config, {});
   }
@@ -19,6 +32,7 @@ medicineClient.defaults.adapter = async (config) => {
   }
   return response;
 };
+const currentReply = () => reply;
 
 const failureOf = (promise: Promise<unknown>) => promise.then(
   () => { throw new Error('expected failure'); },
@@ -27,7 +41,98 @@ const failureOf = (promise: Promise<unknown>) => promise.then(
 
 beforeEach(() => {
   requests.length = 0;
+  queued = [];
   localStorage.clear();
+  refresh.mockReset();
+  redirect.mockReset();
+});
+
+const authorizationOf = (index: number) => requests[index]!.headers.Authorization;
+
+describe('medicineApi.checkAccess', () => {
+  const GRANTED = { status: 200, data: { access: 'granted' } };
+
+  it('sends the stored Auth access token to the Medicine access endpoint', async () => {
+    localStorage.setItem('token', 'access-1');
+    reply = GRANTED;
+
+    await expect(medicineApi.checkAccess()).resolves.toBeUndefined();
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0]!.url).toBe('/access');
+    expect(requests[0]!.method).toBe('get');
+    expect(authorizationOf(0)).toBe('Bearer access-1');
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('refreshes through Auth on 401 and retries once with the new token', async () => {
+    localStorage.setItem('token', 'expired');
+    refresh.mockResolvedValue('access-2');
+    queued = [{ status: 401, data: { error: { code: 'MEDICINE_UNAUTHENTICATED', message: 'x' } } }];
+    reply = GRANTED;
+
+    await medicineApi.checkAccess();
+
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(requests.map((_, i) => authorizationOf(i))).toEqual(['Bearer expired', 'Bearer access-2']);
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('goes to login when the session cannot be refreshed', async () => {
+    refresh.mockRejectedValue(new Error('Missing refresh token'));
+    reply = { status: 401, data: { error: { code: 'MEDICINE_UNAUTHENTICATED', message: 'x' } } };
+
+    await failureOf(medicineApi.checkAccess());
+
+    expect(authorizationOf(0)).toBeUndefined();
+    expect(redirect).toHaveBeenCalledTimes(1);
+    expect(requests).toHaveLength(1);
+  });
+
+  it('goes to login when Medicine still rejects the refreshed token', async () => {
+    localStorage.setItem('token', 'expired');
+    refresh.mockResolvedValue('access-2');
+    reply = { status: 401, data: { error: { code: 'MEDICINE_UNAUTHENTICATED', message: 'x' } } };
+
+    await failureOf(medicineApi.checkAccess());
+
+    expect(requests).toHaveLength(2);
+    expect(redirect).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a forbidden account without refreshing or redirecting', async () => {
+    localStorage.setItem('token', 'access-1');
+    reply = { status: 403, data: { error: { code: 'MEDICINE_FORBIDDEN', message: 'Bạn không có quyền thực hiện thao tác này.' } } };
+
+    const error = await failureOf(medicineApi.checkAccess());
+
+    expect(isMedicineForbidden(error)).toBe(true);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('reports a server error during the access check with the safe server message', async () => {
+    localStorage.setItem('token', 'access-1');
+    reply = { status: 500, data: { error: { code: 'INTERNAL_ERROR', message: 'Đã xảy ra lỗi hệ thống.' } } };
+
+    const error = await failureOf(medicineApi.checkAccess());
+
+    expect(isMedicineForbidden(error)).toBe(false);
+    expect(describeMedicineError(error)).toBe('Đã xảy ra lỗi hệ thống.');
+  });
+
+  it.each([
+    ['an empty body', undefined],
+    ['a different value', { access: 'denied' }],
+    ['an HTML page', '<html></html>'],
+  ])('never treats %s as granted access', async (_label, data) => {
+    localStorage.setItem('token', 'access-1');
+    reply = { status: 200, data };
+
+    const error = await failureOf(medicineApi.checkAccess());
+
+    expect(describeMedicineError(error)).toBe('Phản hồi không hợp lệ từ Medicine backend.');
+  });
 });
 
 describe('medicineApi.getStatus', () => {

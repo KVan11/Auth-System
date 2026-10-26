@@ -13,6 +13,7 @@ const config: MedicineConfig = {
   databaseUrl: 'postgresql://unused@localhost/medicine',
   port: 0,
   frontendOrigin: 'http://localhost:5173',
+  jwtSecret: 'startup-test-secret',
 };
 
 const createFakeDb = (checkConnection: () => Promise<void> = async () => {}) => ({

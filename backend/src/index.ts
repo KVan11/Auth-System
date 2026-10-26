@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import app from './app.js';
+import { getJwtSecret } from './lib/jwtSecret.js';
 import swaggerUI from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 
@@ -32,6 +33,14 @@ const options = {
 
 const swaggerSpec = swaggerJSDoc(options);
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
+
+// Dừng ngay khi khởi động nếu thiếu JWT_SECRET
+try {
+  getJwtSecret();
+} catch (error) {
+  console.error((error as Error).message);
+  process.exit(1);
+}
 
 const PORT = process.env.PORT || 3000;
 

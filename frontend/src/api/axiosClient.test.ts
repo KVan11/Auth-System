@@ -1,3 +1,5 @@
+// Test này tự giả lập localStorage/window nên chạy trong môi trường node
+// @vitest-environment node
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import axiosClient from './axiosClient';

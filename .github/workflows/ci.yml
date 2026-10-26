@@ -1,0 +1,72 @@
+# Chạy build và test cho cả 3 phần mỗi khi push hoặc mở PR vào main.
+# Không chạy test cần database thật (test:integration) và không dùng secret nào.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Push mới lên cùng nhánh thì huỷ lượt chạy cũ
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      # Prisma client bị gitignore nên phải tạo lại; generate không kết nối database,
+      # chỉ cần DATABASE_URL có giá trị để prisma.config.ts đọc được
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      - run: npm run build
+      - run: npm test
+
+  medicine-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: medicine-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: medicine-backend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test

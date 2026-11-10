@@ -3,34 +3,40 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { requireAccess } from './auth/access.js';
 import type { VerifyIdentity } from './auth/identity.js';
 import { notFound, toErrorResponse } from './errors.js';
+import { createSearchRouter } from './modules/search/routes.js';
+import type { SearchService } from './modules/search/types.js';
 
 export interface AppDependencies {
   // Kiểm tra kết nối database
   checkDatabase: () => Promise<void>;
-  // Xác minh access token do Auth cấp (src/auth/identity.ts)
+  // Xác minh token của Auth
   verifyIdentity: VerifyIdentity;
   frontendOrigin: string;
+  // Danh sách và tổng quan bệnh nhân
+  search: SearchService;
 }
 
-// Chỉ tạo app, không mở cổng; việc lắng nghe nằm ở index.ts
-export const createApp = ({ checkDatabase, verifyIdentity, frontendOrigin }: AppDependencies) => {
+// Chỉ tạo app; mở cổng ở index.ts
+export const createApp = ({ checkDatabase, verifyIdentity, frontendOrigin, search }: AppDependencies) => {
   const app = express();
   app.disable('x-powered-by');
-  // Dạng mảng: chỉ trả header CORS khi Origin của request đúng là frontend đã cấu hình
+  // Chỉ cho phép origin của frontend
   app.use(cors({ origin: [frontendOrigin], methods: ['GET'] }));
 
-  // Không chứa dữ liệu nghiệp vụ nên không cần đăng nhập; ngoại lệ này không áp dụng cho endpoint nghiệp vụ
+  // Không cần đăng nhập (không có dữ liệu nghiệp vụ)
   app.get('/api/medicine/status', async (_req, res) => {
     res.set('Cache-Control', 'no-store');
     await checkDatabase();
     res.json({ status: 'ok', database: 'connected' });
   });
 
-  // Kiểm tra quyền vào khu vực Medicine; không trả định danh hay dữ liệu nghiệp vụ
+  // Kiểm tra quyền vào Medicine
   app.get('/api/medicine/access', requireAccess(verifyIdentity, 'medicine.enter'), (_req, res) => {
     res.set('Cache-Control', 'no-store');
     res.json({ access: 'granted' });
   });
+
+  app.use('/api/medicine', createSearchRouter({ verifyIdentity, search }));
 
   app.use((_req, _res, next) => {
     next(notFound());

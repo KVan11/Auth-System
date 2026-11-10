@@ -1,10 +1,16 @@
 import pg from 'pg';
 import { databaseUnavailable } from './errors.js';
 
-// chỉ kiểm tra kết nối
+// Pool hoặc client của pg
+export interface Queryable {
+  query(text: string, values?: unknown[]): Promise<{ rows: unknown[] }>;
+}
+
 export interface MedicineDb {
   checkConnection(): Promise<void>;
   close(): Promise<void>;
+  // Cho repository dùng; không đưa ra API
+  readonly pool: Queryable;
 }
 
 type PoolLike = Pick<pg.Pool, 'query' | 'end' | 'on'>;
@@ -15,14 +21,14 @@ const CONNECTIVITY_PROBE = 'SELECT 1';
 const createPgPool: PoolFactory = (config) => new pg.Pool(config);
 
 export const createMedicineDb = (databaseUrl: string, createPool: PoolFactory = createPgPool): MedicineDb => {
-  // pg.Pool chỉ mở kết nối khi có truy vấn đầu tiên
+  // Pool chỉ kết nối khi có truy vấn đầu tiên
   const pool = createPool({
     connectionString: databaseUrl,
     max: 2,
     connectionTimeoutMillis: 5000,
   });
 
-  // Client đang rảnh bị ngắt sẽ phát 'error'; không lắng nghe thì process bị sập
+  // Bắt lỗi kết nối rảnh để process không bị sập
   pool.on('error', () => {
     console.error('Medicine database: kết nối rảnh bị ngắt.');
   });
@@ -30,6 +36,7 @@ export const createMedicineDb = (databaseUrl: string, createPool: PoolFactory = 
   let closed = false;
 
   return {
+    pool,
     async checkConnection() {
       try {
         await pool.query(CONNECTIVITY_PROBE);

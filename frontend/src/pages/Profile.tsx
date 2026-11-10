@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { User } from '../types/auth';
-import authApi from '../api/authApi';
-import { clearAuthSession, getRefreshToken } from '../api/authStorage';
+import MedicineLayout from '../components/medicine/MedicineLayout';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -16,18 +15,6 @@ const Profile = () => {
             user = null;
         }
     }
-
-    const handleLogout = async () => {
-        const refreshToken = getRefreshToken();
-        try {
-            if (refreshToken) await authApi.logout(refreshToken);
-        } catch {
-            // Vẫn đăng xuất phía client kể cả khi server không phản hồi
-        } finally {
-            clearAuthSession();
-            navigate('/login');
-        }
-    };
 
     if (!user) {
         return (
@@ -48,42 +35,24 @@ const Profile = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-100 px-6 py-10">
-            <div className="mx-auto w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
-                <h1 className="mb-6 text-3xl font-bold text-slate-900">Hồ sơ của bạn</h1>
+        <MedicineLayout>
+            <h1 className="mb-6 text-3xl font-bold text-slate-900">Hồ sơ của bạn</h1>
 
-                <div className="grid gap-3 rounded-2xl bg-slate-50 p-5 text-slate-700">
-                    <p>
-                        <span className="font-semibold text-slate-900">Tên đăng nhập:</span>{' '}
-                        {user.username || 'Chưa có'}
-                    </p>
-                    <p>
-                        <span className="font-semibold text-slate-900">Email:</span>{' '}
-                        {user.email || 'Chưa có'}
-                    </p>
-                    {/* <p>
-                        <span className="font-semibold text-slate-900">Vai trò:</span>{' '}
-                        {user.role || 'Chưa có'}
-                    </p> */}
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                    {/* Quyền vào do Medicine backend quyết định, không dựa vào user lưu ở trình duyệt */}
-                    <button
-                        onClick={() => navigate('/medicine')}
-                        className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white transition hover:bg-blue-700"
-                    >
-                        Vào khu vực Medicine
-                    </button>
-                    <button
-                        onClick={handleLogout}
-                        className="rounded-xl bg-red-600 px-4 py-2.5 font-semibold text-white transition hover:bg-red-700"
-                    >
-                        Đăng xuất
-                    </button>
-                </div>
+            <div className="grid gap-3 rounded-2xl bg-slate-50 p-5 text-slate-700">
+                <p>
+                    <span className="font-semibold text-slate-900">Tên đăng nhập:</span>{' '}
+                    {user.username || 'Chưa có'}
+                </p>
+                <p>
+                    <span className="font-semibold text-slate-900">Email:</span>{' '}
+                    {user.email || 'Chưa có'}
+                </p>
+                {/* <p>
+                    <span className="font-semibold text-slate-900">Vai trò:</span>{' '}
+                    {user.role || 'Chưa có'}
+                </p> */}
             </div>
-        </div>
+        </MedicineLayout>
     );
 }
 

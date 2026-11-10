@@ -60,7 +60,7 @@ describe('loadConfig', () => {
   });
 
   it('does not read Auth settings in place of its own', () => {
-    // DATABASE_URL và JWT_SECRET của Auth không được dùng thay cho biến MEDICINE_*
+    // Không dùng biến của Auth thay thế
     expectConfigError({ DATABASE_URL: VALID_URL, JWT_SECRET: 'auth-secret' });
     expect(expectConfigError({ MEDICINE_DATABASE_URL: VALID_URL, JWT_SECRET: 'auth-secret' })).toContain(
       'MEDICINE_JWT_SECRET'

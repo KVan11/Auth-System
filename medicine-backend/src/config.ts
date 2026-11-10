@@ -15,7 +15,7 @@ type Env = Record<string, string | undefined>;
 const DEFAULT_PORT = 3001;
 const DEFAULT_FRONTEND_ORIGIN = 'http://localhost:5173';
 
-// Thông báo lỗi không bao giờ chứa giá trị cấu hình (có thể chứa mật khẩu)
+// Thông báo lỗi không chứa giá trị cấu hình
 const readDatabaseUrl = (env: Env) => {
   const value = env.MEDICINE_DATABASE_URL?.trim();
   if (!value) {
@@ -61,8 +61,7 @@ const readFrontendOrigin = (env: Env) => {
   return value;
 };
 
-// Khoá xác minh access token, phải trùng JWT_SECRET của Auth; bắt buộc, không có giá trị mặc định
-// (khoá mặc định nằm trong code thì ai đọc code cũng tự ký được token hợp lệ)
+// Bắt buộc, phải trùng JWT_SECRET của Auth; không có giá trị mặc định
 const readJwtSecret = (env: Env) => {
   const value = env.MEDICINE_JWT_SECRET?.trim();
   if (!value) {
@@ -71,7 +70,7 @@ const readJwtSecret = (env: Env) => {
   return value;
 };
 
-// Chỉ đọc biến MEDICINE_*; không lấy biến cấu hình của Auth thay thế
+// Chỉ đọc biến MEDICINE_*
 export const loadConfig = (env: Env = process.env): MedicineConfig => ({
   databaseUrl: readDatabaseUrl(env),
   port: readPort(env),

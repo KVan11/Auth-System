@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { unauthenticated } from '../errors.js';
 
-// Định danh tối thiểu Medicine cần; chỉ tồn tại trong phạm vi một request
+// Thông tin người dùng lấy từ token
 export interface MedicineIdentity {
   userId: number;
   role: string;
@@ -9,7 +9,7 @@ export interface MedicineIdentity {
 
 export type VerifyIdentity = (authorization: string | undefined) => Promise<MedicineIdentity>;
 
-// Chỉ nhận header đúng dạng Bearer token
+// Header dạng: Bearer <token>
 const BEARER_PATTERN = /^Bearer ([A-Za-z0-9\-._~+/]+=*)$/;
 
 const readIdentity = (payload: unknown): MedicineIdentity | undefined => {
@@ -20,18 +20,17 @@ const readIdentity = (payload: unknown): MedicineIdentity | undefined => {
   return { userId: claims.userId as number, role: claims.role };
 };
 
-// Tự xác minh access token bằng khoá dùng chung với Auth (JWT_SECRET, HS256), không gọi sang Auth.
-// Medicine chỉ xác minh, không bao giờ ký token.
+// Xác minh token bằng khoá dùng chung với Auth; Medicine không ký token
 export const createJwtIdentityVerifier = (secret: string): VerifyIdentity => async (authorization) => {
   const token = authorization?.match(BEARER_PATTERN)?.[1];
   if (!token) throw unauthenticated();
 
   let payload: unknown;
   try {
-    // Cố định HS256 để không chấp nhận token "none" hay thuật toán khác
+    // Chỉ chấp nhận HS256
     payload = jwt.verify(token, secret, { algorithms: ['HS256'] });
   } catch {
-    // Sai chữ ký, hết hạn, sai định dạng: đều là chưa đăng nhập (frontend sẽ refresh)
+    // Token sai hoặc hết hạn → 401
     throw unauthenticated();
   }
 

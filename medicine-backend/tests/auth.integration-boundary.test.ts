@@ -9,8 +9,7 @@ import { isAllowed, type MedicineOperation } from '../src/auth/access.js';
 import { createJwtIdentityVerifier } from '../src/auth/identity.js';
 import { AppError } from '../src/errors.js';
 
-// Quyết định T014 (dùng chung JWT_SECRET với Auth, HS256) và T017 (chỉ role ADMIN).
-// Token được ký trong test giống cách Auth ký (backend/src/services/token.service.ts); không gọi Auth, không dùng database Auth.
+// Test xác minh token và phân quyền; token được ký trong test giống Auth
 
 const SECRET = 'shared-test-secret';
 const FRONTEND_ORIGIN = 'http://localhost:5173';
@@ -104,6 +103,12 @@ describe('GET /api/medicine/access', () => {
     checkDatabase: async () => {},
     verifyIdentity: createJwtIdentityVerifier(SECRET),
     frontendOrigin: FRONTEND_ORIGIN,
+    search: {
+      listSubjects: async () => [],
+      getSubject: async () => {
+        throw new Error('not used');
+      },
+    },
   });
 
   it('grants entry to an ADMIN without returning identity details', async () => {
@@ -168,7 +173,6 @@ describe('Medicine only verifies Auth tokens', () => {
     );
 
   it('never signs tokens and never reads Auth settings or database directly', () => {
-    // Khoá chỉ đến từ MEDICINE_JWT_SECRET (config.ts); không ký token, không đọc DATABASE_URL của Auth
     const forbiddenUse = /jwt\.sign|(?:process\.)?env\.JWT_SECRET|(?<!MEDICINE_)DATABASE_URL/;
     for (const file of sourceFiles(srcDir)) {
       expect(readFileSync(file, 'utf8'), file).not.toMatch(forbiddenUse);

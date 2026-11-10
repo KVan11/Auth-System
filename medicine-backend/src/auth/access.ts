@@ -2,10 +2,10 @@ import type { RequestHandler } from 'express';
 import { forbidden } from '../errors.js';
 import type { MedicineIdentity, VerifyIdentity } from './identity.js';
 
-// Thao tác nghiệp vụ được bảo vệ (tên nội bộ, không phải tên quyền của Auth)
+// Các thao tác cần bảo vệ
 export type MedicineOperation = 'medicine.enter' | 'subject.search' | 'subject.view';
 
-// Quyết định của chủ dự án (T017): chỉ role ADMIN, so khớp chính xác; không dùng mảng permissions
+// Chỉ role ADMIN (so khớp chính xác)
 const isAdmin = (identity: MedicineIdentity) => identity.role === 'ADMIN';
 
 const DECISIONS: Record<MedicineOperation, (identity: MedicineIdentity) => boolean> = {
@@ -14,11 +14,11 @@ const DECISIONS: Record<MedicineOperation, (identity: MedicineIdentity) => boole
   'subject.view': isAdmin,
 };
 
-// Thao tác không có trong bảng thì từ chối (fail closed)
+// Thao tác lạ thì từ chối
 export const isAllowed = (identity: MedicineIdentity, operation: MedicineOperation) =>
   Object.hasOwn(DECISIONS, operation) && DECISIONS[operation](identity) === true;
 
-// Xác minh token rồi kiểm tra quyền, trước khi route chạm tới dữ liệu
+// Xác minh token và kiểm tra quyền trước khi vào route
 export const requireAccess =
   (verifyIdentity: VerifyIdentity, operation: MedicineOperation): RequestHandler =>
   async (req, res, next) => {

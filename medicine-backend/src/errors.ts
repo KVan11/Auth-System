@@ -2,7 +2,7 @@ export interface ErrorBody {
   error: { code: string; message: string };
 }
 
-// Lỗi có kiểm soát: status, code và message đều an toàn để trả cho client
+// Lỗi an toàn để trả cho client
 export class AppError extends Error {
   constructor(
     readonly status: number,
@@ -15,7 +15,7 @@ export class AppError extends Error {
   }
 }
 
-// Lỗi gốc của driver chỉ được giữ trong `cause`, không bao giờ trả cho client
+// Lỗi gốc chỉ giữ trong `cause`
 export const databaseUnavailable = (cause?: unknown) =>
   new AppError(503, 'MEDICINE_DB_UNAVAILABLE', 'Không kết nối được cơ sở dữ liệu Medicine.', { cause });
 
@@ -23,6 +23,9 @@ export const notFound = () => new AppError(404, 'NOT_FOUND', 'Không tìm thấy
 
 export const unauthenticated = () =>
   new AppError(401, 'MEDICINE_UNAUTHENTICATED', 'Bạn cần đăng nhập để dùng chức năng này.');
+
+// subjectRef sai dạng hoặc không tồn tại đều trả 404
+export const subjectNotFound = () => new AppError(404, 'MEDICINE_SUBJECT_NOT_FOUND', 'Không tìm thấy bệnh nhân.');
 
 export const forbidden = () => new AppError(403, 'MEDICINE_FORBIDDEN', 'Bạn không có quyền thực hiện thao tác này.');
 

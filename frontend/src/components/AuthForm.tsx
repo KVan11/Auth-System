@@ -49,7 +49,7 @@ export const AuthForm = <T extends string>({
         token: credentialResponse.credential,
       });
       saveAuthSession(res.data);
-      navigate('/profile');
+      navigate('/medicine');
     }
     catch (error: unknown) {
       console.error('Google Auth Error:', error);
@@ -62,7 +62,7 @@ export const AuthForm = <T extends string>({
         token: accessToken,
       });
       saveAuthSession(res.data);
-      navigate('/profile');
+      navigate('/medicine');
     }
     catch (error: unknown) {
       console.error('Fb Login Error:', error);
@@ -159,7 +159,7 @@ export const AuthForm = <T extends string>({
       });
 
       saveAuthSession(res.data);
-      navigate('/profile');
+      navigate('/medicine');
     }
     catch (error: unknown) {
       const message = isAxiosError<{ error?: string }>(error)

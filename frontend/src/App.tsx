@@ -3,6 +3,8 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Profile from './pages/Profile';
 import MedicineWorkspace from './pages/medicine/MedicineWorkspace';
+import SubjectOverview from './pages/medicine/SubjectOverview';
+import SubjectSearch from './pages/medicine/SubjectSearch';
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/medicine" element={<MedicineWorkspace />} />
+        <Route path="/medicine/subjects" element={<SubjectSearch />} />
+        <Route path="/medicine/subjects/:subjectRef" element={<SubjectOverview />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

@@ -9,7 +9,8 @@ export const medicineClient = axios.create({
   timeout: 10000,
 });
 
-class InvalidMedicineResponse extends Error {}
+// Phản hồi sai định dạng → lỗi
+export class InvalidMedicineResponse extends Error {}
 
 const isConnectedStatus = (data: unknown): data is MedicineStatus =>
   typeof data === 'object' &&
@@ -19,9 +20,8 @@ const isConnectedStatus = (data: unknown): data is MedicineStatus =>
 
 const isUnauthenticated = (error: unknown) => isAxiosError(error) && error.response?.status === 401;
 
-// Request được bảo vệ: gắn access token của Auth; gặp 401 thì refresh qua Auth rồi thử lại đúng một lần.
-// Không refresh được (hoặc vẫn 401) thì xoá phiên và về trang đăng nhập.
-const protectedGet = async (url: string, signal?: AbortSignal) => {
+// Gắn token; gặp 401 thì refresh rồi thử lại một lần, thất bại thì về /login
+export const protectedGet = async (url: string, signal?: AbortSignal) => {
   const send = (token: string | null) =>
     medicineClient.get<unknown>(url, {
       ...(signal ? { signal } : {}),
@@ -49,15 +49,14 @@ const protectedGet = async (url: string, signal?: AbortSignal) => {
 };
 
 const medicineApi = {
-  // Không cần đăng nhập: chỉ kiểm tra kết nối
+  // Không cần đăng nhập
   getStatus: async (signal?: AbortSignal) => {
     const res = await medicineClient.get<unknown>('/status', signal ? { signal } : {});
-    // Chỉ coi là thành công khi đúng phản hồi mong đợi
     if (!isConnectedStatus(res.data)) throw new InvalidMedicineResponse();
     return res.data;
   },
 
-  // Kiểm tra quyền vào khu vực Medicine (Medicine xác minh access token và áp dụng quyết định truy cập)
+  // Kiểm tra quyền vào Medicine
   checkAccess: async (signal?: AbortSignal) => {
     const res = await protectedGet('/access', signal);
     if ((res.data as { access?: unknown } | null)?.access !== 'granted') throw new InvalidMedicineResponse();
@@ -65,6 +64,11 @@ const medicineApi = {
 };
 
 export const isMedicineForbidden = (error: unknown) => isAxiosError(error) && error.response?.status === 403;
+
+export const isMedicineNotFound = (error: unknown) =>
+  isAxiosError<{ error?: { code?: unknown } }>(error) &&
+  error.response?.status === 404 &&
+  error.response.data?.error?.code === 'MEDICINE_SUBJECT_NOT_FOUND';
 
 export const describeMedicineError = (error: unknown): string => {
   if (error instanceof InvalidMedicineResponse) return 'Phản hồi không hợp lệ từ Medicine backend.';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AppError, databaseUnavailable, notFound, toErrorResponse } from '../src/errors.js';
 
-// Lỗi giống lỗi thật của driver pg: chứa user, host, mã lỗi và stack
+// Lỗi giả giống lỗi thật của pg
 const rawPgError = () =>
   Object.assign(
     new Error('password authentication failed for user "medicine_user" at db.internal:5432'),

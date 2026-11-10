@@ -11,13 +11,23 @@ const rawPgError = () =>
     code: '28P01',
   });
 
-// Status không cần đăng nhập: nếu route này gọi xác minh định danh thì test thất bại
+// Status không được gọi xác minh token
 const verifyIdentity = vi.fn(async () => {
   throw new Error('status must not verify identity');
 });
 
+// Search không dùng trong file này
+const search = {
+  listSubjects: async () => {
+    throw new Error('search must not be called');
+  },
+  getSubject: async () => {
+    throw new Error('search must not be called');
+  },
+};
+
 const buildApp = (checkDatabase: () => Promise<void> = async () => {}) =>
-  createApp({ checkDatabase, verifyIdentity, frontendOrigin: FRONTEND_ORIGIN });
+  createApp({ checkDatabase, verifyIdentity, frontendOrigin: FRONTEND_ORIGIN, search });
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -49,7 +59,7 @@ describe('GET /api/medicine/status', () => {
     });
     expect(res.headers['cache-control']).toBe('no-store');
     expect(res.text).not.toMatch(SECRETS);
-    // Log phía server chỉ có mã lỗi an toàn
+    // Log chỉ có mã lỗi
     expect(JSON.stringify(log.mock.calls)).not.toMatch(/medicine_user|S3cret|db\.internal|password/);
   });
 
@@ -101,9 +111,8 @@ describe('CORS for the existing frontend', () => {
   });
 });
 
-describe('No business interface in M1', () => {
+describe('No generic or unplanned business interface', () => {
   it.each([
-    ['get', '/api/medicine/subjects'],
     ['post', '/api/medicine/subjects/search'],
     ['get', '/api/medicine/tables/DEM-01'],
     ['post', '/api/medicine/query'],

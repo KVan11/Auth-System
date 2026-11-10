@@ -7,6 +7,8 @@ import { createApp } from './app.js';
 import { createJwtIdentityVerifier } from './auth/identity.js';
 import { ConfigError, loadConfig, type MedicineConfig } from './config.js';
 import { createMedicineDb, type MedicineDb } from './db.js';
+import { createSearchRepository } from './modules/search/repository.js';
+import { createSearchService } from './modules/search/service.js';
 
 export interface RunningServer {
   port: number;
@@ -18,6 +20,7 @@ export const startServer = async ({ config, db }: { config: MedicineConfig; db: 
     checkDatabase: () => db.checkConnection(),
     verifyIdentity: createJwtIdentityVerifier(config.jwtSecret),
     frontendOrigin: config.frontendOrigin,
+    search: createSearchService(createSearchRepository(db.pool)),
   });
   const server = createServer(app);
 
@@ -58,7 +61,7 @@ const main = async () => {
   const running = await startServer({ config, db });
   console.log(`Medicine backend đang chạy tại http://localhost:${running.port}`);
 
-  // Kiểm tra kết nối lúc khởi động chỉ để báo trạng thái; server vẫn chạy nếu database lỗi
+  // Chỉ để báo trạng thái; database lỗi thì server vẫn chạy
   db.checkConnection().then(
     () => console.log('Medicine database: đã kết nối.'),
     () => console.error('Medicine database: không kết nối được (xem GET /api/medicine/status).')
@@ -74,7 +77,7 @@ const main = async () => {
   process.once('SIGTERM', shutdown);
 };
 
-// Chỉ tự khởi động khi file này được chạy trực tiếp (không phải khi test import)
+// Chỉ tự chạy khi gọi trực tiếp (không chạy khi test import)
 const isEntryPoint = () => {
   const entry = process.argv[1];
   if (!entry) return false;

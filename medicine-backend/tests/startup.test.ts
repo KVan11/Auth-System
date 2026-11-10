@@ -19,6 +19,7 @@ const config: MedicineConfig = {
 const createFakeDb = (checkConnection: () => Promise<void> = async () => {}) => ({
   checkConnection: vi.fn(checkConnection),
   close: vi.fn(async () => {}),
+  pool: { query: vi.fn(async () => ({ rows: [] })) },
 }) satisfies MedicineDb;
 
 const running: { close(): Promise<void> }[] = [];

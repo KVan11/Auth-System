@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { redirectToLogin, refreshAccessToken } from '../../src/api/axiosClient';
 import medicineApi, { describeMedicineError, isMedicineForbidden, medicineClient } from '../../src/api/medicineApi';
 
-// Cơ chế refresh của Auth được giả lập; test chỉ kiểm tra Medicine dùng chung nó đúng cách
+// Giả lập refresh của Auth
 vi.mock('../../src/api/axiosClient', () => ({
   default: {},
   refreshAccessToken: vi.fn(),
@@ -16,7 +16,7 @@ type Reply = { status: number; data?: unknown } | 'network-error';
 
 const requests: InternalAxiosRequestConfig[] = [];
 let reply: Reply;
-// Nếu có, các phản hồi trong hàng đợi được dùng trước `reply` (cho luồng 401 → refresh → thử lại)
+// Phản hồi xếp hàng, dùng trước `reply`
 let queued: Reply[] = [];
 
 // Adapter giả thay cho HTTP thật

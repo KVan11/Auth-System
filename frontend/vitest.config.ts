@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
-// Cấu hình riêng cho test; vite.config.ts (dev server, proxy /api) giữ nguyên
+// Cấu hình cho test
 export default defineConfig({
   plugins: [react()],
   test: {

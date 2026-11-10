@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppError } from '../src/errors.js';
 
-// pg.Pool giả: ghi lại mọi câu lệnh để chứng minh chỉ có SELECT 1
+// pg.Pool giả: ghi lại các câu lệnh đã chạy
 const pgMock = vi.hoisted(() => ({
   Pool: vi.fn(function () {
     return { query: vi.fn(), end: vi.fn(), on: vi.fn() };
@@ -68,7 +68,6 @@ describe('createMedicineDb', () => {
     expect(error).toBeInstanceOf(AppError);
     expect(error).toMatchObject({ status: 503, code: 'MEDICINE_DB_UNAVAILABLE' });
     expect((error as AppError).message).not.toMatch(/medicine_user|password|28P01|S3cret/);
-    // Lỗi gốc chỉ được giữ nội bộ
     expect((error as AppError).cause).toBe(raw);
   });
 
@@ -76,15 +75,15 @@ describe('createMedicineDb', () => {
     const fake = createFakePool();
     const db = createMedicineDb(URL, fake.factory);
 
-    expect(Object.keys(db).sort()).toEqual(['checkConnection', 'close']);
+    // `pool` chỉ dành cho repository
+    expect(Object.keys(db).sort()).toEqual(['checkConnection', 'close', 'pool']);
     expect(db.checkConnection.length).toBe(0);
 
     await db.checkConnection();
-    // Tham số thừa bị bỏ qua: không thể chèn câu lệnh khác
+    // Tham số thừa bị bỏ qua
     await (db.checkConnection as (...args: unknown[]) => Promise<void>)('DROP TABLE "DEM-01"', ['x']);
 
     expect(fake.calls).toEqual([['SELECT 1'], ['SELECT 1']]);
-    // Không truy vấn bảng nghiệp vụ, không thay đổi schema hay dữ liệu
     for (const [sql] of fake.calls) {
       expect(sql).not.toMatch(/\b(FROM|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT)\b/i);
     }

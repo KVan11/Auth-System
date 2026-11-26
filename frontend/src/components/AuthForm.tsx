@@ -6,6 +6,7 @@ import axiosClient from '../api/axiosClient';
 import { saveAuthSession } from '../api/authStorage';
 import { Input } from './ui/Input';
 import type { AuthResponse } from '../types/auth';
+import hustLogo from '../assets/hust-logo.png';
 
 type FormField<T extends string> = {
   name: T;
@@ -232,7 +233,7 @@ export const AuthForm = <T extends string>({
             onClick={handleHustLogin}
             className="inline-flex w-fit items-center justify-center gap-2 rounded-full border border-red-200 bg-white px-6 py-2.5 text-sm font-normal text-[#3c4043] transition hover:bg-red-50 self-center"
           >
-            <img src="https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-DH-Bach-Khoa-Ha-Noi-HUST-1021x1536.png" className="h-5" alt="HUST" />
+            <img src={hustLogo} className="h-5" alt="HUST" />
             Xác thực qua tài khoản HUST
           </button>
         </div>

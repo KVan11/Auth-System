@@ -109,6 +109,9 @@ describe('GET /api/medicine/access', () => {
         throw new Error('not used');
       },
     },
+    visitSchedule: async () => {
+      throw new Error('not used');
+    },
   });
 
   it('grants entry to an ADMIN without returning identity details', async () => {

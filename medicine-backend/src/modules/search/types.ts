@@ -1,15 +1,13 @@
-// Kiểu dữ liệu cho danh sách và tổng quan bệnh nhân
+// Kiểu dữ liệu danh sách và tổng quan bệnh nhân.
 
-// Dòng trả về từ database
+// Repository: đúng các cột lấy từ database
 export interface SubjectRow {
   id: number;
   ptid: string | null;
   ten: string | null;
-  // 'YYYY-MM-DD' hoặc null
-  ngaySinh: string | null;
+  ngaySinh: string | null; // 'YYYY-MM-DD'
 }
 
-// Một bệnh nhân (cho trang tổng quan)
 export interface SubjectRecord {
   id: number;
   ptid: string | null;
@@ -17,10 +15,10 @@ export interface SubjectRecord {
 
 export interface SearchRepository {
   listSubjects(): Promise<SubjectRow[]>;
-  findSubject(id: number): Promise<SubjectRecord | null>;
+  findSubject(id: number): Promise<SubjectRecord | null>; // null = không tìm thấy
 }
 
-// DTO trả cho frontend
+// Service: gửi cho frontend. subjectRef = ID database dạng chuỗi, dùng trong URL thay cho PTID.
 export interface SubjectCandidate {
   subjectRef: string;
   ptid: string | null;
@@ -35,5 +33,5 @@ export interface SubjectOverview {
 
 export interface SearchService {
   listSubjects(): Promise<SubjectCandidate[]>;
-  getSubject(subjectRef: string): Promise<SubjectOverview>;
+  getSubject(subjectRef: string): Promise<SubjectOverview>; // không tìm thấy → ném lỗi 404
 }

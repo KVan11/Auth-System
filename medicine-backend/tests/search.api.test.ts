@@ -35,6 +35,9 @@ const buildApp = (search: SearchService = service) =>
     verifyIdentity: createJwtIdentityVerifier(SECRET),
     frontendOrigin: FRONTEND_ORIGIN,
     search,
+    visitSchedule: async () => {
+      throw new Error('not used');
+    },
   });
 
 // Lỗi giả giống lỗi thật của pg

@@ -14,6 +14,7 @@ const config: MedicineConfig = {
   port: 0,
   frontendOrigin: 'http://localhost:5173',
   jwtSecret: 'startup-test-secret',
+  pythonCommand: 'python',
 };
 
 const createFakeDb = (checkConnection: () => Promise<void> = async () => {}) => ({

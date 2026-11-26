@@ -1,8 +1,11 @@
+// Đọc cấu hình MEDICINE_* từ .env. Sai thì dừng lúc khởi động; không in giá trị ra (có thể chứa mật khẩu).
+
 export interface MedicineConfig {
   databaseUrl: string;
   port: number;
   frontendOrigin: string;
   jwtSecret: string;
+  pythonCommand: string;
 }
 
 export class ConfigError extends Error {
@@ -11,11 +14,9 @@ export class ConfigError extends Error {
 
 type Env = Record<string, string | undefined>;
 
-// Giá trị mặc định
 const DEFAULT_PORT = 3001;
 const DEFAULT_FRONTEND_ORIGIN = 'http://localhost:5173';
 
-// Thông báo lỗi không chứa giá trị cấu hình
 const readDatabaseUrl = (env: Env) => {
   const value = env.MEDICINE_DATABASE_URL?.trim();
   if (!value) {
@@ -45,6 +46,7 @@ const readPort = (env: Env) => {
   return port;
 };
 
+// Chỉ origin, ví dụ http://localhost:5173 (không có đường dẫn)
 const readFrontendOrigin = (env: Env) => {
   const value = env.MEDICINE_FRONTEND_ORIGIN;
   if (value === undefined) return DEFAULT_FRONTEND_ORIGIN;
@@ -61,7 +63,6 @@ const readFrontendOrigin = (env: Env) => {
   return value;
 };
 
-// Bắt buộc, phải trùng JWT_SECRET của Auth; không có giá trị mặc định
 const readJwtSecret = (env: Env) => {
   const value = env.MEDICINE_JWT_SECRET?.trim();
   if (!value) {
@@ -70,10 +71,17 @@ const readJwtSecret = (env: Env) => {
   return value;
 };
 
-// Chỉ đọc biến MEDICINE_*
+// Windows thường có `python`, Linux chỉ có `python3`
+export const defaultPythonCommand = (platform: NodeJS.Platform = process.platform) =>
+  platform === 'win32' ? 'python' : 'python3';
+
+const readPythonCommand = (env: Env) => env.MEDICINE_PYTHON?.trim() || defaultPythonCommand();
+
+// Test truyền `env` giả
 export const loadConfig = (env: Env = process.env): MedicineConfig => ({
   databaseUrl: readDatabaseUrl(env),
   port: readPort(env),
   frontendOrigin: readFrontendOrigin(env),
   jwtSecret: readJwtSecret(env),
+  pythonCommand: readPythonCommand(env),
 });

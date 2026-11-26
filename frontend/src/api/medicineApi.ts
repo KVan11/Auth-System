@@ -21,10 +21,11 @@ const isConnectedStatus = (data: unknown): data is MedicineStatus =>
 const isUnauthenticated = (error: unknown) => isAxiosError(error) && error.response?.status === 401;
 
 // Gắn token; gặp 401 thì refresh rồi thử lại một lần, thất bại thì về /login
-export const protectedGet = async (url: string, signal?: AbortSignal) => {
+export const protectedGet = async (url: string, signal?: AbortSignal, responseType?: 'blob') => {
   const send = (token: string | null) =>
     medicineClient.get<unknown>(url, {
       ...(signal ? { signal } : {}),
+      ...(responseType ? { responseType } : {}),
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
 

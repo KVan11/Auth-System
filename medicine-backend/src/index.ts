@@ -1,5 +1,7 @@
+// Khởi động server: đọc .env → kiểm tra cấu hình → kết nối database → mở cổng.
+
 import { realpathSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
@@ -7,6 +9,9 @@ import { createApp } from './app.js';
 import { createJwtIdentityVerifier } from './auth/identity.js';
 import { ConfigError, loadConfig, type MedicineConfig } from './config.js';
 import { createMedicineDb, type MedicineDb } from './db.js';
+import { errorCode } from './errors.js';
+import { createVisitScheduleExport } from './modules/exports/visit-schedule/excel.js';
+import { createVisitScheduleRepository } from './modules/exports/visit-schedule/repository.js';
 import { createSearchRepository } from './modules/search/repository.js';
 import { createSearchService } from './modules/search/service.js';
 
@@ -15,15 +20,30 @@ export interface RunningServer {
   close(): Promise<void>;
 }
 
+const closeHttpServer = (server: Server) =>
+  new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) reject(error);
+      else resolve();
+    });
+  });
+
+// Test gọi hàm này với database giả
 export const startServer = async ({ config, db }: { config: MedicineConfig; db: MedicineDb }): Promise<RunningServer> => {
+  const search = createSearchService(createSearchRepository(db.pool));
+  const visitSchedule = createVisitScheduleExport({
+    repository: createVisitScheduleRepository(db.pool),
+    python: config.pythonCommand,
+  });
   const app = createApp({
     checkDatabase: () => db.checkConnection(),
     verifyIdentity: createJwtIdentityVerifier(config.jwtSecret),
     frontendOrigin: config.frontendOrigin,
-    search: createSearchService(createSearchRepository(db.pool)),
+    search,
+    visitSchedule,
   });
-  const server = createServer(app);
 
+  const server = createServer(app);
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(config.port, () => {
@@ -32,15 +52,18 @@ export const startServer = async ({ config, db }: { config: MedicineConfig; db: 
     });
   });
 
+  // Gọi nhiều lần vẫn chỉ tắt một lần
   let closing: Promise<void> | undefined;
   const close = () => {
-    closing ??= new Promise<void>((resolve, reject) => {
-      server.close((error) => (error ? reject(error) : resolve()));
-    }).finally(() => db.close());
+    if (closing === undefined) {
+      closing = closeHttpServer(server).finally(() => db.close());
+    }
     return closing;
   };
 
-  return { port: (server.address() as AddressInfo).port, close };
+  // Test truyền cổng 0 để hệ điều hành tự chọn
+  const { port } = server.address() as AddressInfo;
+  return { port, close };
 };
 
 const main = async () => {
@@ -61,12 +84,13 @@ const main = async () => {
   const running = await startServer({ config, db });
   console.log(`Medicine backend đang chạy tại http://localhost:${running.port}`);
 
-  // Chỉ để báo trạng thái; database lỗi thì server vẫn chạy
+  // Database lỗi thì server vẫn chạy, API trả 503
   db.checkConnection().then(
     () => console.log('Medicine database: đã kết nối.'),
     () => console.error('Medicine database: không kết nối được (xem GET /api/medicine/status).')
   );
 
+  // Ctrl+C hoặc lệnh dừng: tắt gọn rồi thoát
   const shutdown = () => {
     running.close().then(
       () => process.exit(0),
@@ -77,7 +101,7 @@ const main = async () => {
   process.once('SIGTERM', shutdown);
 };
 
-// Chỉ tự chạy khi gọi trực tiếp (không chạy khi test import)
+// Chỉ chạy main() khi chạy trực tiếp, không chạy khi test import file này
 const isEntryPoint = () => {
   const entry = process.argv[1];
   if (!entry) return false;
@@ -90,8 +114,8 @@ const isEntryPoint = () => {
 
 if (isEntryPoint()) {
   main().catch((error: unknown) => {
-    const code = (error as { code?: unknown } | null)?.code;
-    console.error(`Không khởi động được Medicine backend${typeof code === 'string' ? ` (${code})` : ''}.`);
+    const code = errorCode(error);
+    console.error(`Không khởi động được Medicine backend${code ? ` (${code})` : ''}.`);
     process.exit(1);
   });
 }

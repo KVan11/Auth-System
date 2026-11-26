@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ConfigError, loadConfig } from '../src/config.js';
+import { ConfigError, defaultPythonCommand, loadConfig } from '../src/config.js';
 
 const VALID_URL = 'postgresql://medicine_user:S3cretPass@db.example.test:5432/medicine';
 const JWT_SECRET = 'shared-test-secret';
@@ -26,12 +26,14 @@ describe('loadConfig', () => {
         MEDICINE_PORT: '4100',
         MEDICINE_FRONTEND_ORIGIN: 'http://localhost:5174',
         MEDICINE_JWT_SECRET: '  other-secret  ',
+        MEDICINE_PYTHON: '  /opt/venv/bin/python  ',
       })
     ).toEqual({
       databaseUrl: VALID_URL,
       port: 4100,
       frontendOrigin: 'http://localhost:5174',
       jwtSecret: 'other-secret',
+      pythonCommand: '/opt/venv/bin/python',
     });
   });
 
@@ -41,7 +43,15 @@ describe('loadConfig', () => {
       port: 3001,
       frontendOrigin: 'http://localhost:5173',
       jwtSecret: JWT_SECRET,
+      pythonCommand: defaultPythonCommand(),
     });
+  });
+
+  it('defaults the Python command per platform and ignores a blank MEDICINE_PYTHON', () => {
+    expect(defaultPythonCommand('win32')).toBe('python');
+    expect(defaultPythonCommand('linux')).toBe('python3');
+    expect(defaultPythonCommand('darwin')).toBe('python3');
+    expect(loadConfig({ ...REQUIRED, MEDICINE_PYTHON: '   ' }).pythonCommand).toBe(defaultPythonCommand());
   });
 
   it('accepts the postgres:// scheme', () => {

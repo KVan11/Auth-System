@@ -26,8 +26,13 @@ const search = {
   },
 };
 
+// Xuất Excel không dùng trong file này
+const visitSchedule = async () => {
+  throw new Error('visit schedule must not be called');
+};
+
 const buildApp = (checkDatabase: () => Promise<void> = async () => {}) =>
-  createApp({ checkDatabase, verifyIdentity, frontendOrigin: FRONTEND_ORIGIN, search });
+  createApp({ checkDatabase, verifyIdentity, frontendOrigin: FRONTEND_ORIGIN, search, visitSchedule });
 
 afterEach(() => {
   vi.restoreAllMocks();

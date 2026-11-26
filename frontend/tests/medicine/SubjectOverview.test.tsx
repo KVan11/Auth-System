@@ -51,6 +51,7 @@ describe('SubjectOverview', () => {
     expect(await screen.findByTestId('selected-ptid')).toHaveTextContent('1000001A');
     expect(getSubject).toHaveBeenCalledWith('20', expect.any(AbortSignal));
     expect(screen.getByRole('heading', { name: 'Phân hệ' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Xuất lịch hẹn (Excel)' })).toBeInTheDocument();
     // Chỉ hiện PTID
     expect(screen.queryByText(/Tên|Ngày sinh/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '← Danh sách bệnh nhân' })).toHaveAttribute('href', '/medicine/subjects');
@@ -72,6 +73,7 @@ describe('SubjectOverview', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Không tìm thấy bệnh nhân.');
     expect(screen.queryByTestId('selected-ptid')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Phân hệ' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Xuất lịch hẹn (Excel)' })).not.toBeInTheDocument();
   });
 
   it('explains denied access', async () => {
